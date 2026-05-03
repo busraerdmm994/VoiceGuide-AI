@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# FastAPI
+static/audio/*
+!static/audio/.gitkeep
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+ios/Pods/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# logs
+*.log
+
+# Hassas yapılandırma dosyaları
+voiceguide_backend/config.py
+
+# Statik dosyalar veya geçici klasörler
+voiceguide_backend/static/
