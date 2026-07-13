@@ -10,6 +10,8 @@ from image_utils import process_image_sync
 from ai_service import analyze_image_with_ai
 from tts_service import generate_turkish_audio
 
+from routers import auth_router, history_router
+
 app = FastAPI(title="VoiceGuide AI API")
 
 # Tarayıcı üzerinden web arayüzünün bağlanabilmesi için CORS izni ekliyoruz
@@ -20,6 +22,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth_router.router)
+app.include_router(history_router.router)
 
 # Sesi stream edebilmek için statik klasör
 os.makedirs("static/audio", exist_ok=True)

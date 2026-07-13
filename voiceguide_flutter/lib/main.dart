@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_screen.dart';
+import 'screens/login_screen.dart';
+import 'services/api_service.dart';
 
 List<CameraDescription> cameras = [];
 
@@ -11,11 +13,15 @@ Future<void> main() async {
   } on CameraException catch (e) {
     debugPrint('Kamera başlatılamadı: $e');
   }
-  runApp(const VoiceGuideApp());
+  
+  final token = await ApiService.getToken();
+  
+  runApp(VoiceGuideApp(initialToken: token));
 }
 
 class VoiceGuideApp extends StatelessWidget {
-  const VoiceGuideApp({super.key});
+  final String? initialToken;
+  const VoiceGuideApp({super.key, this.initialToken});
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +29,10 @@ class VoiceGuideApp extends StatelessWidget {
       title: 'VoiceGuide AI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.green,
         useMaterial3: true,
       ),
-      home: HomeScreen(cameras: cameras),
+      home: initialToken != null ? MainScreen(cameras: cameras) : const LoginScreen(),
     );
   }
 }

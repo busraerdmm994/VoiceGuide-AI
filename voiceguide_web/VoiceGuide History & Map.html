@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VoiceGuide AI — History & Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #080f09; font-family: 'DM Sans', sans-serif; overflow: hidden; }
+:root {
+  --forest:#2d5a27; --meadow:#4a7c42; --sage:#7aad70;
+  --mist:#e8f4e6;   --canvas:#f4faf2;
+  --rose:#c9747a;   --blush:#e8b4b7;
+  --gold:#c9a84c;   --cream:#f5edd8;
+  --slate:#1e2d3d;  --dusk:#3a4f63; --fog:#7a8fa0;
+  --dark-bg:#080f09; --dark-surf:#111a12; --dark-card:#172018;
+  --dark-b:rgba(255,255,255,0.09); --dark-bf:rgba(122,173,112,0.6);
+  --dt:rgba(255,255,255,0.92); --ds:rgba(255,255,255,0.45); --dm:rgba(255,255,255,0.22);
+}
+@keyframes pulseRing{0%{transform:scale(1);opacity:.7}100%{transform:scale(2);opacity:0}}
+@keyframes waveBar{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+/* ── ICON ── */
+function Ic({ d, size=20, color="currentColor" }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true"><path d={d}/></svg>;
+}
+const P = {
+  mic:    "M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v7a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm-7 9h2a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.92V21h3v2H8v-2h3v-2.08A7 7 0 0 1 5 12z",
+  cam:    "M12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7zm7-13H18l-1.5-2h-9L6 2.5H5A3 3 0 0 0 2 5.5v13A3 3 0 0 0 5 21.5h14a3 3 0 0 0 3-3v-13a3 3 0 0 0-3-3z",
+  map:    "M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z",
+  hist:   "M13 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95L15 11h5V6l-1.76 1.76A8.97 8.97 0 0 0 13 3zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z",
+  heart:  "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+  set:    "M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
+  star:   "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
+  pin:    "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+  wave:   "M3 9c1.5 0 1.5 2 3 2s1.5-2 3-2 1.5 2 3 2 1.5-2 3-2 1.5 2 3 2v2c-1.5 0-1.5-2-3-2s-1.5 2-3 2-1.5-2-3-2-1.5 2-3 2-1.5-2-3-2V9zm0 6c1.5 0 1.5 2 3 2s1.5-2 3-2 1.5 2 3 2 1.5-2 3-2 1.5 2 3 2v2c-1.5 0-1.5-2-3-2s-1.5 2-3 2-1.5-2-3-2-1.5 2-3 2-1.5-2-3-2v-2z",
+  arrow:  "M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z",
+  search: "M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
+  play:   "M8 5v14l11-7z",
+  pause:  "M6 19h4V5H6v14zm8-14v14h4V5h-4z",
+  back:   "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
+  filter: "M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z",
+  close:  "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
+  nav:    "M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z",
+  layers: "M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z",
+  share:  "M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z",
+  locate: "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z",
+};
+
+/* ── PHONE FRAME ── */
+function Phone({ children, scale=0.68, label, flutter, active=true, onClick }) {
+  const W = 390*scale, H = 844*scale;
+  return (
+    <div onClick={onClick} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12,cursor:onClick?"pointer":"default"}}>
+      {label && <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",
+        color:active?"var(--sage)":"rgba(255,255,255,0.3)",
+        padding:"3px 10px",borderRadius:6,
+        background:active?"rgba(122,173,112,0.12)":"transparent",
+        border:active?"1px solid rgba(122,173,112,0.3)":"1px solid transparent"}}>{label}</div>}
+      <div style={{width:W,height:H,borderRadius:44*scale,background:"#0c1410",
+        border:active?"2px solid rgba(122,173,112,0.4)":"2px solid rgba(255,255,255,0.07)",
+        boxShadow:active?"0 0 0 4px rgba(122,173,112,0.06),0 24px 64px rgba(0,0,0,0.7)":"0 16px 48px rgba(0,0,0,0.5)",
+        overflow:"hidden",position:"relative",transition:"all 0.2s",flexShrink:0}}>
+        {/* notch */}
+        <div style={{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",
+          width:110*scale,height:32*scale,background:"#0c1410",
+          borderBottomLeftRadius:16*scale,borderBottomRightRadius:16*scale,zIndex:20}}/>
+        {/* status */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:44*scale,
+          display:"flex",alignItems:"flex-end",justifyContent:"space-between",
+          padding:`0 ${20*scale}px ${8*scale}px`,zIndex:19}}>
+          <span style={{fontSize:10*scale,fontWeight:600,color:"rgba(255,255,255,0.75)"}}>9:41</span>
+          <div style={{display:"flex",gap:4*scale,alignItems:"center"}}>
+            <svg width={14*scale} height={10*scale} viewBox="0 0 14 10" fill="rgba(255,255,255,0.7)">
+              <rect x="0" y="6" width="2" height="4" rx="0.5"/><rect x="3" y="4" width="2" height="6" rx="0.5"/>
+              <rect x="6" y="2" width="2" height="8" rx="0.5"/><rect x="9" y="0" width="2" height="10" rx="0.5"/>
+            </svg>
+            <svg width={20*scale} height={10*scale} viewBox="0 0 20 10" fill="rgba(255,255,255,0.7)">
+              <rect x="0.5" y="0.5" width="17" height="9" rx="2" stroke="rgba(255,255,255,0.5)" strokeWidth="1" fill="none"/>
+              <rect x="1.5" y="1.5" width="13" height="7" rx="1.5"/>
+              <rect x="18" y="3" width="1.5" height="4" rx="0.75"/>
+            </svg>
+          </div>
+        </div>
+        <div style={{position:"absolute",inset:0,paddingTop:44*scale,overflow:"hidden"}}>{children}</div>
+        <div style={{position:"absolute",bottom:8*scale,left:"50%",transform:"translateX(-50%)",
+          width:110*scale,height:4*scale,borderRadius:2*scale,background:"rgba(255,255,255,0.28)",zIndex:20}}/>
+      </div>
+      {flutter && <div style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"var(--meadow)",
+        background:"rgba(74,124,66,0.12)",borderRadius:5,padding:"2px 10px",
+        border:"1px solid rgba(74,124,66,0.25)"}}>{flutter}</div>}
+    </div>
+  );
+}
+
+const S = 0.68;
+
+/* ── BOTTOM NAV ── */
+function BottomNav({ active }) {
+  const items=[{id:"cam",ic:P.cam,l:"Kamera"},{id:"hist",ic:P.hist,l:"Geçmiş"},
+               {id:"map",ic:P.map,l:"Harita"},{id:"wish",ic:P.heart,l:"Listeler"},{id:"set",ic:P.set,l:"Ayarlar"}];
+  return (
+    <div style={{display:"flex",background:"var(--dark-surf)",borderTop:"1px solid rgba(255,255,255,0.07)",paddingBottom:16*S,paddingTop:8*S}}>
+      {items.map(item=>(
+        <div key={item.id} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3*S}}>
+          <div style={{position:"relative"}}>
+            <Ic d={item.ic} size={22*S} color={item.id===active?"var(--sage)":"rgba(255,255,255,0.3)"}/>
+            {item.id===active && <div style={{position:"absolute",bottom:-4*S,left:"50%",transform:"translateX(-50%)",width:4*S,height:4*S,borderRadius:"50%",background:"var(--rose)"}}/>}
+          </div>
+          <span style={{fontSize:9*S,fontWeight:item.id===active?700:400,color:item.id===active?"var(--sage)":"rgba(255,255,255,0.3)"}}>{item.l}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   HISTORY — STATE 1: LIST VIEW
+══════════════════════════════════════════════ */
+const historyData = [
+  { id:1, name:"Topkapı Sarayı", loc:"Sultanahmet, İstanbul", date:"Bugün", time:"14:32", dur:"3dk 10sn", type:"audio", dist:"350 m", img:"meadow", rating:4.9 },
+  { id:2, name:"Kapalıçarşı", loc:"Fatih, İstanbul", date:"Bugün", time:"11:05", dur:"Fotoğraf", type:"photo", dist:"1.2 km", img:"rose", rating:4.7 },
+  { id:3, name:"Galata Kulesi", loc:"Beyoğlu, İstanbul", date:"Dün", time:"16:44", dur:"1dk 44sn", type:"audio", dist:"2.8 km", img:"gold", rating:4.8 },
+  { id:4, name:"Boğaziçi Köprüsü", loc:"Ortaköy, İstanbul", date:"3 gün önce", time:"09:15", dur:"Rota kaydedildi", type:"nav", dist:"5.1 km", img:"slate", rating:4.6 },
+  { id:5, name:"Dolmabahçe Sarayı", loc:"Beşiktaş, İstanbul", date:"1 hafta önce", time:"13:20", dur:"2dk 58sn", type:"audio", dist:"6.3 km", img:"meadow", rating:4.9 },
+  { id:6, name:"Ayasofya", loc:"Sultanahmet, İstanbul", date:"2 hafta önce", time:"10:00", dur:"4dk 22sn", type:"audio", dist:"380 m", img:"gold", rating:5.0 },
+];
+
+const typeConfig = {
+  audio: { icon:P.mic,   color:"var(--sage)",  label:"Ses" },
+  photo: { icon:P.cam,   color:"var(--rose)",  label:"Foto" },
+  nav:   { icon:P.nav,   color:"var(--gold)",  label:"Rota" },
+};
+
+const imgGrad = {
+  meadow:"linear-gradient(135deg,#2d5a27,#4a7c42)",
+  rose:  "linear-gradient(135deg,#8b3a3f,#c9747a)",
+  gold:  "linear-gradient(135deg,#8b6914,#c9a84c)",
+  slate: "linear-gradient(135deg,#1e2d3d,#3a4f63)",
+};
+
+function HistoryList({ onSelect }) {
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState(false);
+  const filters = ["all","audio","photo","nav"];
+  const filtered = filter==="all" ? historyData : historyData.filter(h=>h.type===filter);
+
+  return (
+    <div style={{height:"100%",background:"var(--dark-bg)",display:"flex",flexDirection:"column"}}>
+      {/* header */}
+      <div style={{padding:`${14*S}px ${18*S}px ${8*S}px`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:24*S,color:"var(--dt)"}}>Geçmiş</div>
+          <div style={{fontSize:11*S,color:"var(--ds)",marginTop:2*S}}>
+            <span style={{color:"var(--sage)",fontWeight:600}}>{historyData.length}</span> yer ziyaret edildi
+          </div>
+        </div>
+        <div style={{display:"flex",gap:8*S}}>
+          <div style={{width:36*S,height:36*S,borderRadius:10*S,background:"rgba(255,255,255,0.06)",
+            border:"1px solid rgba(255,255,255,0.09)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Ic d={P.search} size={18*S} color="rgba(255,255,255,0.5)"/>
+          </div>
+          <div style={{width:36*S,height:36*S,borderRadius:10*S,background:"rgba(255,255,255,0.06)",
+            border:"1px solid rgba(255,255,255,0.09)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Ic d={P.filter} size={18*S} color="rgba(255,255,255,0.5)"/>
+          </div>
+        </div>
+      </div>
+
+      {/* filter chips */}
+      <div style={{display:"flex",gap:6*S,paddingLeft:18*S,paddingRight:18*S,paddingBottom:12*S,overflowX:"auto"}}>
+        {filters.map(f=>{
+          const active = filter===f;
+          const cfg = typeConfig[f];
+          return (
+            <div key={f} onClick={()=>setFilter(f)} style={{
+              height:30*S,padding:`0 ${12*S}px`,borderRadius:9999,flexShrink:0,
+              background:active?"rgba(122,173,112,0.2)":"rgba(255,255,255,0.05)",
+              border:`1px solid ${active?"rgba(122,173,112,0.5)":"rgba(255,255,255,0.09)"}`,
+              display:"flex",alignItems:"center",gap:5*S,cursor:"pointer"
+            }}>
+              {cfg && <Ic d={cfg.icon} size={12*S} color={active?cfg.color:"rgba(255,255,255,0.3)"}/>}
+              <span style={{fontSize:11*S,fontWeight:active?700:400,color:active?"var(--sage)":"rgba(255,255,255,0.35)"}}>
+                {f==="all"?"Tümü":cfg?.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* list */}
+      <div style={{flex:1,overflowY:"auto",padding:`0 ${14*S}px`,display:"flex",flexDirection:"column",gap:8*S}}>
+        {/* today section */}
+        <div style={{fontSize:10*S,fontWeight:700,color:"rgba(255,255,255,0.25)",letterSpacing:"0.1em",paddingLeft:4*S,paddingTop:2*S}}>BUGÜN</div>
+        {filtered.filter(h=>h.date==="Bugün").map(item=>(
+          <HistoryCard key={item.id} item={item} onSelect={onSelect}/>
+        ))}
+        <div style={{fontSize:10*S,fontWeight:700,color:"rgba(255,255,255,0.25)",letterSpacing:"0.1em",paddingLeft:4*S,marginTop:4*S}}>DAHA ÖNCE</div>
+        {filtered.filter(h=>h.date!=="Bugün").map(item=>(
+          <HistoryCard key={item.id} item={item} onSelect={onSelect}/>
+        ))}
+      </div>
+
+      <BottomNav active="hist"/>
+    </div>
+  );
+}
+
+function HistoryCard({ item, onSelect }) {
+  const cfg = typeConfig[item.type];
+  return (
+    <div onClick={()=>onSelect(item)} style={{
+      background:"var(--dark-card)",border:"1px solid rgba(255,255,255,0.07)",
+      borderRadius:16*S,padding:`${12*S}px ${14*S}px`,
+      display:"flex",alignItems:"center",gap:12*S,cursor:"pointer",
+      transition:"all 0.15s"
+    }}>
+      {/* thumb */}
+      <div style={{width:48*S,height:48*S,borderRadius:12*S,background:imgGrad[item.img],
+        display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
+        <Ic d={P.pin} size={20*S} color="rgba(255,255,255,0.5)"/>
+        {/* type badge */}
+        <div style={{position:"absolute",top:-4*S,right:-4*S,width:16*S,height:16*S,borderRadius:"50%",
+          background:"var(--dark-bg)",border:"1.5px solid var(--dark-card)",
+          display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Ic d={cfg.icon} size={9*S} color={cfg.color}/>
+        </div>
+      </div>
+      {/* info */}
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:14*S,fontWeight:700,color:"var(--dt)",
+          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name}</div>
+        <div style={{display:"flex",alignItems:"center",gap:5*S,marginTop:2*S}}>
+          <Ic d={P.pin} size={10*S} color="var(--rose)"/>
+          <span style={{fontSize:11*S,color:"var(--ds)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.loc}</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8*S,marginTop:4*S}}>
+          <span style={{fontSize:10*S,color:"var(--dm)"}}>{item.date} · {item.time}</span>
+          <div style={{width:3*S,height:3*S,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>
+          <span style={{fontSize:10*S,color:cfg.color,fontWeight:600}}>{item.dur}</span>
+        </div>
+      </div>
+      {/* play btn for audio */}
+      {item.type==="audio" && (
+        <div style={{width:36*S,height:36*S,borderRadius:"50%",background:"rgba(74,124,66,0.2)",
+          border:"1.5px solid rgba(74,124,66,0.4)",display:"flex",alignItems:"center",
+          justifyContent:"center",flexShrink:0}}>
+          <Ic d={P.play} size={16*S} color="var(--sage)"/>
+        </div>
+      )}
+      {item.type!=="audio" && (
+        <Ic d={P.arrow} size={16*S} color="rgba(255,255,255,0.2)"/>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   HISTORY — STATE 2: DETAIL + AUDIO PLAYER
+══════════════════════════════════════════════ */
+function HistoryDetail({ item, onBack }) {
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(38);
+
+  useEffect(()=>{
+    if(!playing) return;
+    const t = setInterval(()=>setProgress(p=>p>=100?100:p+0.5),150);
+    return ()=>clearInterval(t);
+  },[playing]);
+
+  return (
+    <div style={{height:"100%",background:"var(--dark-bg)",display:"flex",flexDirection:"column"}}>
+      {/* hero image */}
+      <div style={{height:200*S,position:"relative",background:imgGrad[item.img],
+        display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}}>
+        {/* pattern overlay */}
+        <div style={{position:"absolute",inset:0,
+          backgroundImage:"radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px)",
+          backgroundSize:`${20*S}px ${20*S}px`}}/>
+        <div style={{opacity:0.3,textAlign:"center",position:"relative"}}>
+          <Ic d={P.pin} size={48*S} color="#fff"/>
+          <div style={{fontSize:10*S,color:"#fff",fontFamily:"'DM Mono',monospace",marginTop:4*S}}>yer fotoğrafı</div>
+        </div>
+        {/* back */}
+        <div onClick={onBack} style={{position:"absolute",top:10*S,left:14*S,width:36*S,height:36*S,borderRadius:"50%",
+          background:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)",
+          display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+          <Ic d={P.back} size={18*S} color="#fff"/>
+        </div>
+        {/* share */}
+        <div style={{position:"absolute",top:10*S,right:14*S,width:36*S,height:36*S,borderRadius:"50%",
+          background:"rgba(0,0,0,0.4)",backdropFilter:"blur(8px)",
+          display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+          <Ic d={P.share} size={18*S} color="#fff"/>
+        </div>
+        {/* rating */}
+        <div style={{position:"absolute",bottom:12*S,left:14*S,
+          background:"var(--gold)",borderRadius:9999,padding:`${4*S}px ${10*S}px`,
+          display:"flex",alignItems:"center",gap:4*S}}>
+          <Ic d={P.star} size={11*S} color="var(--slate)"/>
+          <span style={{fontSize:11*S,fontWeight:700,color:"var(--slate)"}}>{item.rating}</span>
+        </div>
+        {/* date chip */}
+        <div style={{position:"absolute",bottom:12*S,right:14*S,
+          background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)",borderRadius:9999,
+          padding:`${4*S}px ${10*S}px`,fontSize:10*S,color:"rgba(255,255,255,0.7)"}}>
+          {item.date} · {item.time}
+        </div>
+      </div>
+
+      {/* content */}
+      <div style={{flex:1,overflowY:"auto",padding:`${16*S}px ${18*S}px`}}>
+        <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22*S,color:"var(--dt)",marginBottom:4*S,lineHeight:1.2}}>
+          {item.name}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6*S,marginBottom:16*S}}>
+          <Ic d={P.pin} size={12*S} color="var(--rose)"/>
+          <span style={{fontSize:12*S,color:"var(--ds)"}}>{item.loc} · {item.dist} uzakta</span>
+        </div>
+
+        {/* AUDIO PLAYER CARD */}
+        {item.type==="audio" && (
+          <div style={{background:"var(--dark-card)",border:"1px solid rgba(255,255,255,0.09)",
+            borderRadius:18*S,padding:`${16*S}px ${16*S}px`,marginBottom:14*S}}>
+            {/* label */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12*S}}>
+              <div style={{display:"flex",alignItems:"center",gap:6*S}}>
+                <div style={{width:6*S,height:6*S,borderRadius:"50%",background:playing?"var(--sage)":"rgba(255,255,255,0.2)",
+                  boxShadow:playing?"0 0 8px var(--sage)":"none",transition:"all 0.3s"}}/>
+                <span style={{fontSize:10*S,fontWeight:700,color:playing?"var(--sage)":"var(--ds)",letterSpacing:"0.08em"}}>
+                  {playing?"OYNATILIYOR":"SESLİ AÇIKLAMA"}
+                </span>
+              </div>
+              <span style={{fontSize:10*S,color:"var(--dm)",fontFamily:"'DM Mono',monospace"}}>{item.dur}</span>
+            </div>
+            {/* waveform */}
+            <div style={{display:"flex",alignItems:"center",gap:2*S,height:36*S,marginBottom:10*S,position:"relative"}}>
+              {Array.from({length:40},(_,i)=>{
+                const h = Math.abs(Math.sin(i*0.7+0.5)*14+10);
+                const filled = (i/40)*100 < progress;
+                return (
+                  <div key={i} style={{
+                    flex:1,height:`${h*S}px`,borderRadius:2,
+                    background:filled?"var(--meadow)":"rgba(255,255,255,0.1)",
+                    animation:playing&&filled?`waveBar ${0.5+i*0.04}s ${i*0.03}s ease-in-out infinite`:"none",
+                    transformOrigin:"bottom",transition:"background 0.1s"
+                  }}/>
+                );
+              })}
+            </div>
+            {/* progress bar */}
+            <div style={{height:3*S,background:"rgba(255,255,255,0.08)",borderRadius:2,marginBottom:10*S}}>
+              <div style={{height:"100%",width:`${progress}%`,background:"var(--meadow)",borderRadius:2,transition:"width 0.15s"}}/>
+            </div>
+            {/* controls */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <span style={{fontSize:11*S,color:"var(--dm)",fontFamily:"'DM Mono',monospace"}}>1:08</span>
+              <div style={{display:"flex",gap:16*S,alignItems:"center"}}>
+                {/* rewind */}
+                <div style={{opacity:0.5}}>
+                  <svg width={20*S} height={20*S} viewBox="0 0 24 24" fill="rgba(255,255,255,0.6)">
+                    <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                    <text x="12" y="14" textAnchor="middle" fontSize="6" fill="rgba(255,255,255,0.6)" fontFamily="sans-serif">10</text>
+                  </svg>
+                </div>
+                {/* play/pause */}
+                <div onClick={()=>setPlaying(!playing)} style={{
+                  width:48*S,height:48*S,borderRadius:"50%",
+                  background:"var(--meadow)",display:"flex",alignItems:"center",justifyContent:"center",
+                  cursor:"pointer",boxShadow:"0 4px 16px rgba(74,124,66,0.45)"}}>
+                  <Ic d={playing?P.pause:P.play} size={22*S} color="#fff"/>
+                </div>
+                {/* forward */}
+                <div style={{opacity:0.5}}>
+                  <svg width={20*S} height={20*S} viewBox="0 0 24 24" fill="rgba(255,255,255,0.6)">
+                    <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
+                    <text x="12" y="14" textAnchor="middle" fontSize="6" fill="rgba(255,255,255,0.6)" fontFamily="sans-serif">10</text>
+                  </svg>
+                </div>
+              </div>
+              <span style={{fontSize:11*S,color:"var(--dm)",fontFamily:"'DM Mono',monospace"}}>2:52</span>
+            </div>
+          </div>
+        )}
+
+        {/* description */}
+        <div style={{fontSize:13*S,color:"rgba(255,255,255,0.5)",lineHeight:1.7,marginBottom:16*S}}>
+          Osmanlı İmparatorluğu'nun 400 yıllık idare merkezi. 86 dönümlük alanda 4 ana avlu ve 300'den fazla oda bulunmaktadır. Topkapı, bugün yaklaşık 86,000 m² alana yayılmaktadır.
+        </div>
+
+        {/* action row */}
+        <div style={{display:"flex",gap:10*S}}>
+          <div style={{flex:1,height:46*S,borderRadius:14*S,background:"rgba(74,124,66,0.2)",
+            border:"1.5px solid rgba(74,124,66,0.4)",display:"flex",alignItems:"center",justifyContent:"center",gap:7*S,cursor:"pointer"}}>
+            <Ic d={P.nav} size={16*S} color="var(--sage)"/>
+            <span style={{fontSize:13*S,fontWeight:700,color:"var(--sage)"}}>Yol Tarifi</span>
+          </div>
+          <div style={{flex:1,height:46*S,borderRadius:14*S,background:"rgba(201,116,122,0.1)",
+            border:"1.5px solid rgba(201,116,122,0.3)",display:"flex",alignItems:"center",justifyContent:"center",gap:7*S,cursor:"pointer"}}>
+            <Ic d={P.heart} size={16*S} color="var(--rose)"/>
+            <span style={{fontSize:13*S,fontWeight:700,color:"var(--rose)"}}>Favorile</span>
+          </div>
+        </div>
+      </div>
+
+      <BottomNav active="hist"/>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   MAP SCREEN — Full states
+══════════════════════════════════════════════ */
+const mapMarkers = [
+  { id:1, x:50, y:40, name:"Topkapı Sarayı",   type:"visited", color:"var(--meadow)", size:1.2 },
+  { id:2, x:30, y:58, name:"Kapalıçarşı",       type:"visited", color:"var(--sage)",   size:1.0 },
+  { id:3, x:68, y:32, name:"Galata Kulesi",     type:"visited", color:"var(--meadow)", size:0.9 },
+  { id:4, x:78, y:62, name:"Çırağan Sarayı",   type:"wishlist",color:"var(--rose)",   size:0.95},
+  { id:5, x:20, y:72, name:"Süleymaniye",       type:"visited", color:"var(--sage)",   size:0.85},
+  { id:6, x:55, y:68, name:"Arkeoloji Müzesi",  type:"wishlist",color:"var(--rose)",   size:0.9 },
+  { id:7, x:42, y:22, name:"Rumeli Hisarı",     type:"wishlist",color:"var(--gold)",   size:0.85},
+  { id:8, x:85, y:48, name:"Kadıköy",           type:"visited", color:"var(--gold)",   size:0.8 },
+];
+
+function MapScreen({ detailed=false }) {
+  const [selected, setSelected] = useState(detailed ? mapMarkers[0] : null);
+  const [filterMode, setFilterMode] = useState("all");
+
+  const visible = filterMode==="all" ? mapMarkers
+    : mapMarkers.filter(m=>m.type===filterMode);
+
+  return (
+    <div style={{height:"100%",background:"#0c1410",display:"flex",flexDirection:"column"}}>
+      {/* top bar */}
+      <div style={{padding:`${12*S}px ${16*S}px ${8*S}px`,
+        display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+        <div>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:20*S,color:"var(--dt)"}}>Harita</div>
+          <div style={{fontSize:10*S,color:"var(--ds)",marginTop:1*S}}>
+            <span style={{color:"var(--sage)",fontWeight:600}}>{mapMarkers.filter(m=>m.type==="visited").length}</span> ziyaret ·{" "}
+            <span style={{color:"var(--rose)",fontWeight:600}}>{mapMarkers.filter(m=>m.type==="wishlist").length}</span> istek
+          </div>
+        </div>
+        {/* locate */}
+        <div style={{width:36*S,height:36*S,borderRadius:10*S,background:"rgba(74,124,66,0.15)",
+          border:"1px solid rgba(74,124,66,0.3)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <Ic d={P.locate} size={18*S} color="var(--sage)"/>
+        </div>
+      </div>
+
+      {/* filter chips */}
+      <div style={{display:"flex",gap:6*S,paddingLeft:16*S,paddingRight:16*S,paddingBottom:10*S,flexShrink:0}}>
+        {[["all","Tümü","rgba(122,173,112,0.5)"],["visited","Ziyaret","var(--sage)"],["wishlist","İstek","var(--rose)"]].map(([id,label,color])=>(
+          <div key={id} onClick={()=>setFilterMode(id)} style={{
+            height:28*S,padding:`0 ${11*S}px`,borderRadius:9999,cursor:"pointer",
+            background:filterMode===id?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.04)",
+            border:`1px solid ${filterMode===id?color:"rgba(255,255,255,0.08)"}`,
+            display:"flex",alignItems:"center",gap:5*S
+          }}>
+            {id!=="all" && <div style={{width:6*S,height:6*S,borderRadius:"50%",background:color}}/>}
+            <span style={{fontSize:11*S,fontWeight:filterMode===id?700:400,
+              color:filterMode===id?"var(--dt)":"rgba(255,255,255,0.35)"}}>{label}</span>
+          </div>
+        ))}
+        <div style={{marginLeft:"auto",height:28*S,padding:`0 ${11*S}px`,borderRadius:9999,
+          background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
+          display:"flex",alignItems:"center",gap:5*S,cursor:"pointer"}}>
+          <Ic d={P.layers} size={13*S} color="rgba(255,255,255,0.35)"/>
+          <span style={{fontSize:11*S,color:"rgba(255,255,255,0.35)"}}>Katman</span>
+        </div>
+      </div>
+
+      {/* MAP AREA */}
+      <div style={{flex:1,position:"relative",margin:`0 ${10*S}px`,borderRadius:16*S,overflow:"hidden",minHeight:0}}>
+        {/* dark map tiles */}
+        <div style={{position:"absolute",inset:0,background:"#141f15",
+          backgroundImage:"linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)",
+          backgroundSize:`${36*S}px ${36*S}px`}}/>
+        {/* road network SVG */}
+        <svg style={{position:"absolute",inset:0,width:"100%",height:"100%"}} viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M5,50 Q20,35 50,40 T95,32" stroke="rgba(255,255,255,0.06)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+          <path d="M0,65 Q25,58 50,58 T100,62" stroke="rgba(255,255,255,0.06)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+          <path d="M0,80 Q40,72 60,68 T100,72" stroke="rgba(255,255,255,0.04)" strokeWidth="1.5" fill="none"/>
+          <path d="M28,0 Q30,40 30,58 T32,100" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" fill="none"/>
+          <path d="M65,5 Q67,35 68,58 T68,100" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" fill="none"/>
+          <path d="M48,0 L50,100" stroke="rgba(255,255,255,0.03)" strokeWidth="1" fill="none"/>
+          {/* water body */}
+          <ellipse cx="72" cy="80" rx="22" ry="12" fill="rgba(30,60,80,0.4)"/>
+          <text x="72" y="81" textAnchor="middle" fontSize="3" fill="rgba(100,160,200,0.4)" fontFamily="sans-serif">Boğaz</text>
+        </svg>
+        {/* markers */}
+        {visible.map(m=>(
+          <div key={m.id}
+            onClick={()=>setSelected(selected?.id===m.id?null:m)}
+            style={{position:"absolute",left:`${m.x}%`,top:`${m.y}%`,transform:"translate(-50%,-100%)",
+              cursor:"pointer",transition:"transform 0.2s",
+              transform:selected?.id===m.id?"translate(-50%,-100%) scale(1.2)":"translate(-50%,-100%) scale(1)"}}>
+            {/* pin shape */}
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center"}}>
+              <div style={{
+                width:32*S*m.size,height:32*S*m.size,borderRadius:"50% 50% 50% 0",
+                transform:"rotate(-45deg)",
+                background:m.color,
+                border:"2.5px solid rgba(255,255,255,0.9)",
+                boxShadow:`0 3px 12px ${m.color}60`,
+                display:"flex",alignItems:"center",justifyContent:"center"
+              }}>
+                <div style={{transform:"rotate(45deg)"}}>
+                  {m.type==="wishlist"
+                    ? <Ic d={P.heart} size={12*S*m.size} color="#fff"/>
+                    : <Ic d={P.pin} size={12*S*m.size} color="#fff"/>
+                  }
+                </div>
+              </div>
+            </div>
+            {/* selected label */}
+            {selected?.id===m.id && (
+              <div style={{
+                position:"absolute",bottom:"100%",left:"50%",transform:"translateX(-50%) translateY(-8*S)",
+                background:"var(--dark-surf)",border:"1px solid rgba(255,255,255,0.12)",
+                borderRadius:8*S,padding:`${4*S}px ${8*S}px`,whiteSpace:"nowrap",
+                fontSize:10*S,fontWeight:600,color:"var(--dt)",
+                boxShadow:"0 4px 16px rgba(0,0,0,0.5)",marginBottom:4*S
+              }}>{m.name}</div>
+            )}
+          </div>
+        ))}
+        {/* current loc */}
+        <div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)"}}>
+          <div style={{width:14*S,height:14*S,borderRadius:"50%",background:"#4fc3f7",
+            border:"3px solid #fff",boxShadow:`0 0 0 ${6*S}px rgba(79,195,247,0.2)`}}/>
+        </div>
+        {/* map controls */}
+        <div style={{position:"absolute",right:10*S,top:"50%",transform:"translateY(-50%)",
+          display:"flex",flexDirection:"column",gap:2*S}}>
+          {["+","–"].map(btn=>(
+            <div key={btn} style={{width:32*S,height:32*S,borderRadius:8*S,
+              background:"rgba(17,26,18,0.9)",backdropFilter:"blur(8px)",
+              border:"1px solid rgba(255,255,255,0.1)",
+              display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",
+              fontSize:18*S,color:"rgba(255,255,255,0.7)",fontWeight:300}}>{btn}</div>
+          ))}
+        </div>
+      </div>
+
+      {/* BOTTOM SHEET — selected place */}
+      {selected ? (
+        <div style={{
+          background:"var(--dark-surf)",borderTop:"1px solid rgba(255,255,255,0.07)",
+          borderTopLeftRadius:20*S,borderTopRightRadius:20*S,
+          padding:`${14*S}px ${16*S}px ${10*S}px`,flexShrink:0,
+          animation:"fadeUp 0.2s ease"
+        }}>
+          {/* handle */}
+          <div style={{width:36*S,height:4*S,borderRadius:2*S,background:"rgba(255,255,255,0.15)",margin:`0 auto ${12*S}px`}}/>
+          <div style={{display:"flex",alignItems:"center",gap:12*S}}>
+            <div style={{width:44*S,height:44*S,borderRadius:12*S,background:selected.color,
+              display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              {selected.type==="wishlist"
+                ? <Ic d={P.heart} size={20*S} color="#fff"/>
+                : <Ic d={P.pin} size={20*S} color="#fff"/>
+              }
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:15*S,fontWeight:700,color:"var(--dt)",
+                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selected.name}</div>
+              <div style={{display:"flex",alignItems:"center",gap:6*S,marginTop:2*S}}>
+                <div style={{fontSize:11*S,fontWeight:700,
+                  color:selected.type==="wishlist"?"var(--rose)":"var(--sage)",
+                  background:selected.type==="wishlist"?"rgba(201,116,122,0.15)":"rgba(122,173,112,0.15)",
+                  borderRadius:4*S,padding:`${2*S}px ${6*S}px`}}>
+                  {selected.type==="wishlist"?"Gideceklerim":"Ziyaret Edildi"}
+                </div>
+              </div>
+            </div>
+            <div style={{display:"flex",gap:8*S}}>
+              <div style={{width:36*S,height:36*S,borderRadius:10*S,
+                background:"rgba(74,124,66,0.15)",border:"1px solid rgba(74,124,66,0.3)",
+                display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+                <Ic d={P.nav} size={17*S} color="var(--sage)"/>
+              </div>
+              {selected.type==="visited" && (
+                <div style={{width:36*S,height:36*S,borderRadius:10*S,
+                  background:"rgba(74,124,66,0.15)",border:"1px solid rgba(74,124,66,0.3)",
+                  display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+                  <Ic d={P.play} size={17*S} color="var(--sage)"/>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* legend */
+        <div style={{padding:`${10*S}px ${16*S}px ${4*S}px`,flexShrink:0,display:"flex",gap:16*S,alignItems:"center"}}>
+          {[["var(--meadow)","Ziyaret",P.pin],["var(--rose)","Gidecek",P.heart],["var(--gold)","Özel",P.star]].map(([c,l,ic])=>(
+            <div key={l} style={{display:"flex",alignItems:"center",gap:5*S}}>
+              <div style={{width:8*S,height:8*S,borderRadius:"50%",background:c}}/>
+              <span style={{fontSize:10*S,color:"rgba(255,255,255,0.35)"}}>{l}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <BottomNav active="map"/>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   SPEC PANELS
+══════════════════════════════════════════════ */
+function UXSpec({ screen }) {
+  const specs = {
+    history: {
+      purpose:"Kullanıcının geçmiş sesli keşiflerini kronolojik olarak görmesi ve sesli içerikleri tekrar oynatması.",
+      flows:[
+        "Liste görünümü → tap → Detay + Audio Player",
+        "Detayda play → progress bar animasyonu + waveform",
+        "Swipe left → silme onayı (DeleteConfirmSheet)",
+        "Pull-to-refresh → yeni kayıtları senkronize et",
+        "Arama → SearchDelegate — isim veya konuma göre",
+        "Filtre chip → type bazlı filtreleme (audio/photo/nav)",
+      ],
+      states:["List (boş / dolu)","Loading skeleton","Detail + Player","Player expanded","Error (network)"],
+      widgets:[
+        ["SliverAppBar","collapsibleTitle + search + filter actions"],
+        ["SliverList + StickyHeader","tarih gruplamalı liste"],
+        ["_HistoryCard","thumbnail · badge · title · meta · play btn"],
+        ["DraggableScrollableSheet","oynatıcı detay panel"],
+        ["_AudioPlayer (custom)","waveform CustomPainter + progress + controls"],
+        ["just_audio package","AudioPlayer — play/pause/seek/skip"],
+        ["Slidable","swipe-to-delete + swipe-to-favorite"],
+        ["Shimmer","loading skeleton cards"],
+      ],
+      a11y:[
+        "Semantics: 'Topkapı Sarayı, 3 dakika 10 saniye ses kaydı, çift dokunun to play'",
+        "Audio playback: TalkBack 'oynatılıyor / duraklatıldı' announcements",
+        "Skip 10s: accessible increment buttons (Semantics.adjustable)",
+        "Waveform: erişilebilir olmayan dekoratif — role:image olarak işaretle",
+      ]
+    },
+    map: {
+      purpose:"Ziyaret edilen ve gidilmek istenen yerleri harita üzerinde görselleştirmek, konuma dayalı keşif yapabilmek.",
+      flows:[
+        "Harita yükle → tüm marker'ları göster",
+        "Marker tap → BottomSheet slide up (place detail)",
+        "BottomSheet → 'Dinle' → History detail'e navigate",
+        "BottomSheet → 'Yol Tarifi' → Google Maps external intent",
+        "Filter chip → sadece visited / sadece wishlist",
+        "Locate button → kamera current position'a odaklanır",
+        "Cluster tap (yakın markerlar) → zoom in → ayrı markerlar",
+      ],
+      states:["Map loading","Markers visible","Marker selected (BottomSheet)","Filter active","Cluster view","Error (izin yok)"],
+      widgets:[
+        ["flutter_map + OpenStreetMap","dark tile layer (CartoDB DarkMatter)"],
+        ["MarkerLayer","custom _PlaceMarker widget per type"],
+        ["_PlaceMarker (visited)","yeşil pin + beyaz border + shadow"],
+        ["_PlaceMarker (wishlist)","rose kalp + beyaz border + shadow"],
+        ["_PlaceMarker (special)","gold yıldız"],
+        ["DraggableScrollableSheet","seçili yer detayı"],
+        ["ClusterPlugin","yakın markerları gruplar"],
+        ["PermissionHandler","konum izni dialog"],
+        ["Geolocator","current position stream"],
+      ],
+      a11y:[
+        "Her marker: Semantics(label:'Topkapı Sarayı, ziyaret edildi, konumdan 350m', button:true)",
+        "BottomSheet handle: 'yer detayı, kapatmak için aşağı kaydırın'",
+        "Harita yetersiz erişilebilirlik → alternatif ListView toggle (üst bar ikonu)",
+        "Konum izni: açıklamalı dialog — görme engelli kullanıcı için sözlü açıklama",
+      ]
+    }
+  };
+  const s = specs[screen];
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:20}}>
+      {/* purpose */}
+      <div style={{background:"rgba(74,124,66,0.08)",border:"1px solid rgba(74,124,66,0.2)",borderRadius:14,padding:"18px 20px"}}>
+        <div style={{fontSize:10,fontWeight:700,color:"var(--sage)",letterSpacing:"0.1em",marginBottom:8}}>EKRAN AMACI</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.7}}>{s.purpose}</div>
+      </div>
+      {/* user flows */}
+      <div>
+        <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.3)",letterSpacing:"0.1em",marginBottom:10}}>KULLANICI AKIŞLARI</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {s.flows.map((f,i)=>(
+            <div key={i} style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+              <div style={{width:20,height:20,borderRadius:"50%",background:"rgba(74,124,66,0.15)",
+                border:"1px solid rgba(74,124,66,0.3)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <span style={{fontSize:9,fontWeight:700,color:"var(--sage)"}}>{i+1}</span>
+              </div>
+              <span style={{fontSize:12,color:"rgba(255,255,255,0.45)",lineHeight:1.6}}>{f}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* states */}
+      <div>
+        <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.3)",letterSpacing:"0.1em",marginBottom:10}}>EKRAN DURUMLARI</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+          {s.states.map((st,i)=>(
+            <div key={i} style={{
+              background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)",
+              borderRadius:8,padding:"5px 12px",fontSize:11,color:"rgba(255,255,255,0.4)"}}>
+              {st}
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* widgets */}
+      <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,overflow:"hidden"}}>
+        <div style={{padding:"12px 18px",borderBottom:"1px solid rgba(255,255,255,0.06)",
+          fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.3)",letterSpacing:"0.1em"}}>FLUTTER WIDGETS</div>
+        <div style={{padding:"12px 18px",display:"flex",flexDirection:"column",gap:10}}>
+          {s.widgets.map(([w,desc],i)=>(
+            <div key={i} style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:12}}>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:"var(--sage)"}}>{w}</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontFamily:"'DM Mono',monospace",lineHeight:1.5}}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* a11y */}
+      <div>
+        <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.3)",letterSpacing:"0.1em",marginBottom:10}}>ERİŞİLEBİLİRLİK</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {s.a11y.map((a,i)=>(
+            <div key={i} style={{display:"flex",gap:10,alignItems:"flex-start",
+              background:"rgba(201,116,122,0.06)",border:"1px solid rgba(201,116,122,0.15)",
+              borderRadius:10,padding:"10px 14px"}}>
+              <Ic d={P.wave} size={14} color="var(--rose)"/>
+              <span style={{fontSize:12,color:"rgba(255,255,255,0.45)",lineHeight:1.6}}>{a}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   MAIN APP
+══════════════════════════════════════════════ */
+function App() {
+  const [tweaks, setTweak] = useTweaks(/*EDITMODE-BEGIN*/{
+    "screen": "map",
+    "historyState": "list",
+    "section": "preview",
+    "compareStates": true
+  }/*EDITMODE-END*/);
+
+  const [selectedItem, setSelectedItem] = useState(historyData[0]);
+
+  const screens = [
+    { id:"history", label:"History" },
+    { id:"map",     label:"Map" },
+  ];
+
+  return (
+    <>
+      <TweaksPanel>
+        <TweakSection label="Ekran">
+          <TweakRadio label="Aktif Ekran" options={["history","map"]}
+            value={tweaks.screen} onChange={v=>setTweak("screen",v)}/>
+          <TweakToggle label="Durumları Karşılaştır"
+            value={tweaks.compareStates} onChange={v=>setTweak("compareStates",v)}/>
+        </TweakSection>
+        {tweaks.screen==="history" && (
+          <TweakSection label="History State">
+            <TweakRadio label="Durum" options={["list","detail"]}
+              value={tweaks.historyState} onChange={v=>setTweak("historyState",v)}/>
+          </TweakSection>
+        )}
+        <TweakSection label="Bölüm">
+          <TweakRadio label="Görünüm" options={["preview","spec"]}
+            value={tweaks.section} onChange={v=>setTweak("section",v)}/>
+        </TweakSection>
+      </TweaksPanel>
+
+      {/* HEADER */}
+      <div style={{position:"fixed",top:0,left:0,right:0,zIndex:100,
+        background:"rgba(8,15,9,0.95)",backdropFilter:"blur(20px)",
+        borderBottom:"1px solid rgba(255,255,255,0.07)",
+        padding:"14px 32px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{width:32,height:32,borderRadius:10,
+            background:"linear-gradient(135deg,var(--meadow),var(--rose))",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Ic d={P.wave} size={18} color="#fff"/>
+          </div>
+          <div>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:17,color:"#fff"}}>
+              VoiceGuide AI — {tweaks.screen==="history"?"History":"Map"} Screen
+            </div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.1em"}}>
+              DARK MODE · FLUTTER READY · ACCESSIBILITY FIRST
+            </div>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:4}}>
+          {/* screen toggle */}
+          {screens.map(s=>(
+            <button key={s.id} onClick={()=>setTweak("screen",s.id)} style={{
+              height:32,padding:"0 14px",borderRadius:8,cursor:"pointer",
+              background:tweaks.screen===s.id?"rgba(74,124,66,0.25)":"transparent",
+              border:tweaks.screen===s.id?"1px solid rgba(74,124,66,0.45)":"1px solid transparent",
+              color:tweaks.screen===s.id?"var(--sage)":"rgba(255,255,255,0.3)",
+              fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",transition:"all 0.18s"
+            }}>{s.label}</button>
+          ))}
+          <div style={{width:1,background:"rgba(255,255,255,0.1)",margin:"4px 8px"}}/>
+          {/* section toggle */}
+          {[["preview","Önizleme"],["spec","UX Spec"]].map(([id,label])=>(
+            <button key={id} onClick={()=>setTweak("section",id)} style={{
+              height:32,padding:"0 14px",borderRadius:8,cursor:"pointer",
+              background:tweaks.section===id?"rgba(201,116,122,0.2)":"transparent",
+              border:tweaks.section===id?"1px solid rgba(201,116,122,0.4)":"1px solid transparent",
+              color:tweaks.section===id?"var(--rose)":"rgba(255,255,255,0.3)",
+              fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",transition:"all 0.18s"
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{paddingTop:68,minHeight:"100vh",overflowX:"hidden"}}>
+
+        {/* ─── PREVIEW ─── */}
+        {tweaks.section==="preview" && (
+          <div style={{padding:"40px 40px 60px"}}>
+
+            {/* HISTORY */}
+            {tweaks.screen==="history" && (
+              <>
+                <div style={{marginBottom:36}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.12em",color:"rgba(255,255,255,0.25)",marginBottom:6,textTransform:"uppercase"}}>Screen 06</div>
+                  <div style={{fontFamily:"'DM Serif Display',serif",fontSize:36,color:"#fff",marginBottom:8}}>History Screen</div>
+                  <div style={{fontSize:14,color:"rgba(255,255,255,0.35)",maxWidth:500,lineHeight:1.6}}>
+                    İki ana durum: liste görünümü ve seçili yer detayı + ses oynatıcı. Karşılaştır toggle'ını açın.
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:36,flexWrap:"wrap",alignItems:"flex-start"}}>
+                  {(tweaks.compareStates || tweaks.historyState==="list") && (
+                    <Phone label="Liste Görünümü" flutter="HistoryScreen → ListView" active={tweaks.historyState==="list"}>
+                      <HistoryList onSelect={(item)=>{setSelectedItem(item);setTweak("historyState","detail");}}/>
+                    </Phone>
+                  )}
+                  {(tweaks.compareStates || tweaks.historyState==="detail") && (
+                    <Phone label="Detay + Ses Oynatıcı" flutter="HistoryDetailScreen" active={tweaks.historyState==="detail"}>
+                      <HistoryDetail item={selectedItem} onBack={()=>setTweak("historyState","list")}/>
+                    </Phone>
+                  )}
+                  {/* component callouts */}
+                  <div style={{flex:1,minWidth:260,paddingTop:28,display:"flex",flexDirection:"column",gap:16}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.25)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Kritik Bileşenler</div>
+                    {[
+                      {title:"Filter Chips",color:"var(--sage)",desc:"type bazlı filtreleme — tümü / ses / fotoğraf / rota"},
+                      {title:"History Card",color:"var(--meadow)",desc:"thumbnail + type badge + title + meta + play btn"},
+                      {title:"Date Section Headers",color:"var(--gold)",desc:"StickyHeader — Bugün / Dün / 3 gün önce"},
+                      {title:"Audio Player",color:"var(--rose)",desc:"waveform + progress + play/pause/±10sn + just_audio"},
+                      {title:"Swipe Actions",color:"var(--sage)",desc:"Slidable — sil (sol) / favorile (sağ)"},
+                    ].map((c,i)=>(
+                      <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",
+                        borderRadius:12,padding:"14px 16px",display:"flex",gap:12,alignItems:"flex-start"}}>
+                        <div style={{width:4,height:"100%",borderRadius:2,background:c.color,flexShrink:0,alignSelf:"stretch"}}/>
+                        <div>
+                          <div style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.85)",marginBottom:4}}>{c.title}</div>
+                          <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",lineHeight:1.5}}>{c.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* MAP */}
+            {tweaks.screen==="map" && (
+              <>
+                <div style={{marginBottom:36}}>
+                  <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.12em",color:"rgba(255,255,255,0.25)",marginBottom:6,textTransform:"uppercase"}}>Screen 07</div>
+                  <div style={{fontFamily:"'DM Serif Display',serif",fontSize:36,color:"#fff",marginBottom:8}}>Map Screen</div>
+                  <div style={{fontSize:14,color:"rgba(255,255,255,0.35)",maxWidth:500,lineHeight:1.6}}>
+                    Ziyaret edilen (yeşil) ve gidilmek istenen (rose) yerler. Marker'lara dokunun.
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:36,flexWrap:"wrap",alignItems:"flex-start"}}>
+                  {tweaks.compareStates ? (
+                    <>
+                      <Phone label="Boş Seçim" flutter="MapScreen (no selection)" active={false}>
+                        <MapScreen detailed={false}/>
+                      </Phone>
+                      <Phone label="Marker Seçili" flutter="MapScreen + BottomSheet" active={true}>
+                        <MapScreen detailed={true}/>
+                      </Phone>
+                    </>
+                  ) : (
+                    <Phone label="Map Screen" flutter="MapScreen" active={true}>
+                      <MapScreen detailed={false}/>
+                    </Phone>
+                  )}
+                  {/* marker legend */}
+                  <div style={{flex:1,minWidth:260,paddingTop:28,display:"flex",flexDirection:"column",gap:16}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"rgba(255,255,255,0.25)",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:4}}>Marker Sistemi</div>
+                    {[
+                      {color:"var(--meadow)",type:"Ziyaret Edildi",shape:"pin",desc:"Yeşil — sesli kayıt mevcut, oynatılabilir",flutter:"_PlaceMarker(type: visited)"},
+                      {color:"var(--rose)",type:"Gideceklerim",shape:"heart",desc:"Rose kalp — wishlist — yol tarifi alınabilir",flutter:"_PlaceMarker(type: wishlist)"},
+                      {color:"var(--gold)",type:"Özel / Önerilen",shape:"star",desc:"Altın — AI önerisi veya premium alan",flutter:"_PlaceMarker(type: special)"},
+                      {color:"#4fc3f7",type:"Mevcut Konum",shape:"dot",desc:"Mavi dot + halo — Geolocator stream",flutter:"_CurrentLocationMarker"},
+                    ].map((m,i)=>(
+                      <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",
+                        borderRadius:12,padding:"14px 16px",display:"flex",gap:12,alignItems:"center"}}>
+                        <div style={{width:36,height:36,borderRadius:"50%",background:m.color,
+                          display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+                          boxShadow:`0 3px 10px ${m.color}50`}}>
+                          <Ic d={m.shape==="heart"?P.heart:m.shape==="star"?P.star:P.pin} size={16} color="#fff"/>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}}>
+                            <span style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.85)"}}>{m.type}</span>
+                            <span style={{fontSize:10,fontFamily:"'DM Mono',monospace",color:"rgba(255,255,255,0.2)"}}>{m.flutter}</span>
+                          </div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{m.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ─── SPEC ─── */}
+        {tweaks.section==="spec" && (
+          <div style={{padding:"40px 40px 60px"}}>
+            <div style={{marginBottom:32}}>
+              <div style={{fontSize:11,fontWeight:700,letterSpacing:"0.12em",color:"rgba(255,255,255,0.25)",marginBottom:6,textTransform:"uppercase"}}>UX Spec</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:32,color:"#fff",marginBottom:8}}>
+                {tweaks.screen==="history"?"History":"Map"} — Akış & Flutter Implementation
+              </div>
+            </div>
+            <div style={{display:"flex",gap:40,flexWrap:"wrap",alignItems:"flex-start"}}>
+              <Phone label={tweaks.screen==="history"?"History":"Map"} flutter={tweaks.screen==="history"?"HistoryScreen":"MapScreen"} active={true}>
+                {tweaks.screen==="history"
+                  ? <HistoryList onSelect={setSelectedItem}/>
+                  : <MapScreen detailed={false}/>
+                }
+              </Phone>
+              <div style={{flex:1,minWidth:400}}>
+                <UXSpec screen={tweaks.screen}/>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+      <style>{`
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes waveBar{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+        @keyframes pulseRing{0%{transform:scale(1);opacity:.7}100%{transform:scale(2.2);opacity:0}}
+      `}</style>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

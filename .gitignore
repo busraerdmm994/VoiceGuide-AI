@@ -30,3 +30,4 @@ voiceguide_backend/config.py
 
 # Statik dosyalar veya geçici klasörler
 voiceguide_backend/static/
+voiceguide_backend/voiceguide.db

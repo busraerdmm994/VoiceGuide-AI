@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import '../services/api_service.dart';
 import '../services/audio_service.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -128,6 +129,18 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.stop_circle, color: Colors.redAccent, size: 30),
             onPressed: () => _audioService.stop(),
             tooltip: "Sesi Sustur",
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white, size: 28),
+            onPressed: () async {
+              _audioService.stop();
+              await ApiService.logout();
+              if (!mounted) return;
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              );
+            },
+            tooltip: "Çıkış Yap",
           )
         ],
       ),

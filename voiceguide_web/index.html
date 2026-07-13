@@ -1,415 +1,700 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceGuide AI - Akıllı Rehber</title>
-    <!-- Modern tipografi için Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* Tasarım Sistemimiz (Premium Dark Mode) */
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.6);
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --accent: #8b5cf6;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-            /* Arka plan için dinamik degradeler */
-            background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.15), transparent 40%),
-                              radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.15), transparent 40%);
-        }
-
-        .container {
-            width: 100%;
-            max-width: 700px;
-            margin-top: 2rem;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-            animation: fadeInDown 0.8s ease-out;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            background: linear-gradient(to right, #60a5fa, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-            letter-spacing: -1px;
-        }
-
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 1.2rem;
-            font-weight: 400;
-        }
-
-        /* Glassmorphism Efektli Kart */
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-
-        .upload-area {
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 4rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            background: rgba(0, 0, 0, 0.2);
-        }
-
-        .upload-area:hover, .upload-area.dragover {
-            border-color: var(--primary);
-            background: rgba(59, 130, 246, 0.1);
-            transform: scale(1.02);
-        }
-
-        .upload-icon {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-
-        .upload-text {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-subtext {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        #preview-container {
-            display: none;
-            text-align: center;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        #image-preview {
-            max-width: 100%;
-            max-height: 350px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
-            object-fit: contain;
-        }
-
-        button {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            border: none;
-            border-radius: 999px;
-            padding: 1rem 3rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 2rem;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
-        }
-
-        button:disabled {
-            background: #475569;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Sonuç Alanı */
-        #result-container {
-            display: none;
-            margin-top: 2rem;
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .result-section {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 16px;
-            padding: 1.5rem;
-            border: 1px solid rgba(255,255,255,0.05);
-            margin-bottom: 1rem;
-        }
-
-        .result-title {
-            color: var(--accent);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 700;
-            margin-bottom: 0.8rem;
-        }
-
-        .result-text {
-            font-size: 1.05rem;
-            line-height: 1.6;
-            color: #e2e8f0;
-        }
-
-        .audio-player-wrapper {
-            margin-top: 1.5rem;
-            width: 100%;
-        }
-
-        audio {
-            width: 100%;
-            height: 45px;
-            border-radius: 999px;
-            outline: none;
-        }
-
-        /* Yükleniyor Animasyonu */
-        .loader-container {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 3rem;
-        }
-
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-radius: 50%;
-            border-top-color: var(--accent);
-            animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
-            margin-bottom: 1.5rem;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VoiceGuide AI — Akıllı Rehber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #080f09; font-family: 'DM Sans', sans-serif; color: rgba(255,255,255,0.92); overflow: hidden; }
+:root {
+  --forest:  #2d5a27; --meadow: #4a7c42; --sage: #7aad70;
+  --mist:    #e8f4e6; --canvas: #f4faf2;
+  --rose:    #c9747a; --blush:  #e8b4b7;
+  --gold:    #c9a84c; --cream:  #f5edd8;
+  --slate:   #1e2d3d; --dusk:   #3a4f63; --fog:   #7a8fa0;
+  --dark-bg:      #080f09;
+  --dark-surf: #111a12;
+  --dark-card:    #172018;
+  --dark-border:  rgba(255,255,255,0.09);
+  --dark-border-focus: rgba(122,173,112,0.7);
+  --dark-text:    rgba(255,255,255,0.92);
+  --dt:    rgba(255,255,255,0.92);
+  --ds:     rgba(255,255,255,0.45);
+  --dm:   rgba(255,255,255,0.22);
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes waveBar { 0%,100% { transform:scaleY(0.35); } 50% { transform:scaleY(1); } }
+input[type='range'] { -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; cursor:pointer; }
+input[type='range']::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--sage); cursor:pointer; box-shadow:0 0 6px rgba(74,124,66,0.5); }
+body { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% -20%, rgba(74,124,66,0.15) 0%, #080f09 60%); }
+#root { width: 100%; max-width: 500px; height: 100vh; display: flex; flex-direction: column; position: relative; }
+input { outline: none; border: none; background: transparent; font-family: 'DM Sans', sans-serif; color: white; width: 100%; font-size: 15px;}
+input::placeholder { color: rgba(255,255,255,0.25); }
+.glass-panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); backdrop-filter: blur(12px); border-radius: 24px; padding: 30px; animation: fadeUp 0.6s ease-out forwards;}
+.btn-primary { background: linear-gradient(135deg, var(--meadow), #3d6b36); box-shadow: 0 6px 20px rgba(74,124,66,0.4); color: white; border: none; border-radius: 14px; height: 52px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: transform 0.2s, box-shadow 0.2s;}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(74,124,66,0.6); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.upload-box { border: 2px dashed rgba(255,255,255,0.15); border-radius: 16px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(0,0,0,0.2); }
+.upload-box:hover { border-color: var(--sage); background: rgba(122,173,112,0.05); }
+.spinner { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--sage); border-radius: 50%; animation: spin 1s linear infinite; }
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+</style>
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
 
-    <header>
-        <h1>VoiceGuide AI</h1>
-        <p class="subtitle">Çevrenizi Yapay Zeka ile Dinleyin</p>
-    </header>
+function Ic({ d, size=24, color="currentColor" }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true"><path d={d}/></svg>;
+}
+const PATH = {
+  wave: "M3 9c1.5 0 1.5 2 3 2s1.5-2 3-2 1.5 2 3 2 1.5-2 3-2 1.5 2 3 2v2c-1.5 0-1.5-2-3-2s-1.5 2-3 2-1.5-2-3-2-1.5 2-3 2-1.5-2-3-2V9zm0 6c1.5 0 1.5 2 3 2s1.5-2 3-2 1.5 2 3 2 1.5-2 3-2 1.5 2 3 2v2c-1.5 0-1.5-2-3-2s-1.5 2-3 2-1.5-2-3-2-1.5 2-3 2-1.5-2-3-2v-2z",
+  mail: "M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z",
+  lock: "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z",
+  arrow: "M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
+  camera: "M4 4h3l2-2h6l2 2h3c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm8 3c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.65 0-3-1.35-3-3s1.35-3 3-3 3 1.35 3 3-1.35 3-3 3z",
+  logout: "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z",
+  mic: "M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v7a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm-7 9h2a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.92V21h3v2H8v-2h3v-2.08A7 7 0 0 1 5 12z",
+  hist: "M13 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95L15 11h5V6l-1.76 1.76A8.97 8.97 0 0 0 13 3zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8z",
+  play: "M8 5v14l11-7z",
+  pause: "M6 19h4V5H6v14zm8-14v14h4V5h-4z",
+  pin: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+  map: "M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z",
+  locate: "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
+};
 
-    <div class="container">
-        <div class="card">
-            
-            <!-- Resim Yükleme Alanı -->
-            <div class="upload-area" id="drop-zone">
-                <input type="file" id="file-input" accept="image/*">
-                <div class="upload-icon">📸</div>
-                <div class="upload-text">Görüntü Seçin veya Çekin</div>
-                <div class="upload-subtext">JPEG, PNG formatları desteklenir</div>
-            </div>
+const API_BASE = "http://127.0.0.1:8000/api/v1";
 
-            <!-- Resim Önizleme ve Buton -->
-            <div id="preview-container">
-                <img id="image-preview" src="" alt="Preview">
-                <br>
-                <button id="analyze-btn">Yapay Zeka ile Analiz Et</button>
-            </div>
+// ─── Leaflet MapScreen ───────────────────────────────────────
+function MapScreen({ token }) {
+  const mapRef = useRef(null);
+  const leafletMap = useRef(null);
+  const markersRef = useRef([]);
+  const [places, setPlaces] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-            <!-- Yükleniyor Göstergesi -->
-            <div class="loader-container" id="loader">
-                <div class="spinner"></div>
-                <p style="color: var(--text-muted); font-size: 1.1rem;">Yapay zeka analiz ediyor, ses sentezleniyor...</p>
-            </div>
+  useEffect(() => {
+    fetch(`${API_BASE}/user/visited-places`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(d => { setPlaces(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [token]);
 
-            <!-- Sonuç Alanı -->
-            <div id="result-container">
-                
-                <div class="result-section">
-                    <div class="result-title">Fiziksel Betimleme</div>
-                    <div class="result-text" id="desc-text"></div>
-                </div>
-                
-                <div class="result-section">
-                    <div class="result-title">Tarihi & Kültürel Detaylar</div>
-                    <div class="result-text" id="details-text"></div>
-                </div>
-                
-                <div class="audio-player-wrapper">
-                    <audio id="audio-player" controls autoplay>
-                        Tarayıcınız ses oynatmayı desteklemiyor.
-                    </audio>
-                </div>
-                
-                <div style="text-align: center; margin-top: 1rem;">
-                    <a href="#" onclick="location.reload();" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">← Yeni Bir Fotoğraf Analiz Et</a>
-                </div>
+  useEffect(() => {
+    if (loading || !mapRef.current) return;
+    if (leafletMap.current) return; // sadece bir kere init
 
-            </div>
+    const validPlaces = places.filter(p => p.location_lat && p.location_lng);
+    const center = validPlaces.length
+      ? [validPlaces[0].location_lat, validPlaces[0].location_lng]
+      : [41.0082, 28.9784]; // İstanbul varsayılan
+
+    const map = L.map(mapRef.current, {
+      center, zoom: 12,
+      zoomControl: false,
+    });
+    leafletMap.current = map;
+
+    // Karanlık tema tile
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+    }).addTo(map);
+
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    // Markerları ekle
+    validPlaces.forEach(p => {
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:28px;height:28px;background:#4a7c42;border:2.5px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 0 12px rgba(74,124,66,0.6);display:flex;align-items:center;justify-content:center;"><div style="transform:rotate(45deg);width:8px;height:8px;background:rgba(255,255,255,0.9);border-radius:50%"></div></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+      });
+      const marker = L.marker([p.location_lat, p.location_lng], { icon })
+        .addTo(map)
+        .on('click', () => setSelected(p));
+      markersRef.current.push(marker);
+    });
+
+    map.on('click', () => setSelected(null));
+
+    return () => { map.remove(); leafletMap.current = null; };
+  }, [loading]);
+
+  const locateMe = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(pos => {
+      leafletMap.current?.setView([pos.coords.latitude, pos.coords.longitude], 14);
+    });
+  };
+
+  const validCount = places.filter(p => p.location_lat && p.location_lng).length;
+
+  return (
+    <div style={{height:"100%",background:"var(--dark-bg)",display:"flex",flexDirection:"column",position:"relative"}}>
+      {/* Üst Başlık */}
+      <div style={{padding:"16px 20px 10px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,zIndex:500,position:"relative"}}>
+        <div>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:26,color:"var(--dt)"}}>Harita</div>
+          <div style={{fontSize:13,color:"var(--ds)",marginTop:2}}>
+            <span style={{color:"var(--sage)",fontWeight:600}}>{validCount}</span> yer ziyaret edildi
+          </div>
         </div>
+        <div onClick={locateMe} style={{width:40,height:40,borderRadius:11,background:"rgba(74,124,66,0.15)",border:"1px solid rgba(74,124,66,0.35)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>
+          <Ic d={PATH.locate} size={20} color="var(--sage)"/>
+        </div>
+      </div>
+
+      {/* Harita Alanı */}
+      {loading ? (
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--ds)"}}>
+          Yükleniyor...
+        </div>
+      ) : validCount === 0 ? (
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12}}>
+          <Ic d={PATH.map} size={56} color="rgba(255,255,255,0.12)"/>
+          <div style={{color:"rgba(255,255,255,0.35)",fontSize:14}}>Henüz ziyaret kaydı yok.</div>
+          <div style={{color:"rgba(255,255,255,0.2)",fontSize:12,textAlign:"center"}}>Kamera ile analiz yapın,<br/>konumunuz haritaya eklensin.</div>
+        </div>
+      ) : (
+        <div ref={mapRef} style={{flex:1,minHeight:0}}/>
+      )}
+
+      {/* Seçili yer kartı */}
+      {selected && (
+        <div style={{
+          position:"absolute",bottom:8,left:12,right:12,
+          background:"rgba(17,26,18,0.95)",backdropFilter:"blur(12px)",
+          border:"1.5px solid rgba(122,173,112,0.35)",borderRadius:20,
+          padding:"16px 18px",zIndex:1000,
+          boxShadow:"0 4px 24px rgba(74,124,66,0.15),0 8px 32px rgba(0,0,0,0.5)",
+          animation:"fadeUp 0.25s ease"
+        }}>
+          <div style={{display:"flex",alignItems:"center",gap:14}}>
+            <div style={{width:46,height:46,borderRadius:13,background:"linear-gradient(135deg,#2d5a27,#4a7c42)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <Ic d={PATH.pin} size={22} color="rgba(255,255,255,0.6)"/>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:15,fontWeight:700,color:"var(--dt)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{selected.place_name}</div>
+              <div style={{fontSize:11,color:"var(--ds)",marginTop:3}}>
+                {selected.location_lat?.toFixed(4)}, {selected.location_lng?.toFixed(4)}
+              </div>
+              <div style={{fontSize:11,color:"var(--dm)",marginTop:2}}>
+                {selected.visited_at ? new Date(selected.visited_at).toLocaleDateString('tr-TR') : ''}
+              </div>
+            </div>
+            <div onClick={()=>setSelected(null)} style={{width:32,height:32,borderRadius:"50%",background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}}>
+              <span style={{color:"rgba(255,255,255,0.4)",fontSize:16}}>✕</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
 
-    <script>
-        const fileInput = document.getElementById('file-input');
-        const previewContainer = document.getElementById('preview-container');
-        const imagePreview = document.getElementById('image-preview');
-        const analyzeBtn = document.getElementById('analyze-btn');
-        const loader = document.getElementById('loader');
-        const resultContainer = document.getElementById('result-container');
-        const descText = document.getElementById('desc-text');
-        const detailsText = document.getElementById('details-text');
-        const audioPlayer = document.getElementById('audio-player');
-        const dropZone = document.getElementById('drop-zone');
+function App() {
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [tab, setTab] = useState("cam"); // cam, hist
 
-        let selectedFile = null;
+  const handleLogin = (newToken) => {
+    setToken(newToken);
+    localStorage.setItem('token', newToken);
+  };
 
-        // Backend API Adresi (FastAPI varsayılan olarak 8000 portunda çalışır)
-        const API_URL = 'http://127.0.0.1:8000/api/v1/analyze';
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+  };
 
-        // Sürükle Bırak (Drag & Drop) Efektleri
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
+  if (!token) return (
+    <div style={{padding:20, flex:1, display:"flex", alignItems:"center"}}>
+      <LoginScreen onLogin={handleLogin} />
+    </div>
+  );
+
+  return (
+    <>
+      <div style={{flex:1, overflow:"hidden", display:"flex", flexDirection:"column"}}>
+        {tab === "cam" ? (
+          <div style={{padding:20, flex:1, overflowY:"auto"}}>
+             <MainScreen token={token} onLogout={handleLogout} />
+          </div>
+        ) : tab === "hist" ? (
+          <HistoryScreen token={token} />
+        ) : (
+          <MapScreen token={token} />
+        )}
+      </div>
+
+      {/* Bottom Nav */}
+      <div style={{display:"flex",background:"var(--dark-surf)",borderTop:"1px solid rgba(255,255,255,0.07)",paddingBottom:20,paddingTop:12, flexShrink:0}}>
+        {[
+          {id:"cam",  ic:PATH.camera, l:"Kamera"},
+          {id:"hist", ic:PATH.hist,   l:"Geçmiş"},
+          {id:"map",  ic:PATH.map,    l:"Harita"},
+        ].map(item=>(
+          <div key={item.id} onClick={()=>setTab(item.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4, cursor:"pointer"}}>
+            <div style={{position:"relative"}}>
+              <Ic d={item.ic} size={24} color={item.id===tab?"var(--sage)":"rgba(255,255,255,0.3)"}/>
+              {item.id===tab && <div style={{position:"absolute",bottom:-5,left:"50%",transform:"translateX(-50%)",width:4,height:4,borderRadius:"50%",background:"var(--rose)"}}/>}
+            </div>
+            <span style={{fontSize:11,fontWeight:item.id===tab?700:400,color:item.id===tab?"var(--sage)":"rgba(255,255,255,0.3)"}}>{item.l}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function useAudioPlayer(url) {
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [position, setPosition]   = useState(0);   // 0-1
+  const [currentTime, setCurrent] = useState(0);
+  const [duration, setDuration]   = useState(0);
+
+  useEffect(() => {
+    if (!url) return;
+    const a = new Audio(url);
+    audioRef.current = a;
+    a.onloadedmetadata = () => setDuration(a.duration);
+    a.ontimeupdate = () => { setCurrent(a.currentTime); setPosition(a.currentTime / (a.duration || 1)); };
+    a.onended = () => { setIsPlaying(false); setPosition(0); setCurrent(0); a.currentTime = 0; };
+    return () => { a.pause(); a.src = ""; };
+  }, [url]);
+
+  const toggle = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (isPlaying) { a.pause(); setIsPlaying(false); }
+    else { a.play(); setIsPlaying(true); }
+  };
+
+  const seek = (ratio) => {
+    const a = audioRef.current;
+    if (!a || !duration) return;
+    a.currentTime = ratio * duration;
+    setPosition(ratio);
+  };
+
+  const fmt = (s) => {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = Math.floor(s % 60).toString().padStart(2, '0');
+    return `${m}:${sec}`;
+  };
+
+  return { isPlaying, position, currentTime, duration, toggle, seek, fmt };
+}
+
+function Waveform({ isPlaying }) {
+  const bars = Array.from({length: 28}, (_, i) => {
+    const h = Math.abs(Math.sin(i * 0.65 + 0.4) * 14 + 8);
+    return h;
+  });
+  return (
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:2,height:32,marginBottom:8}}>
+      {bars.map((h, i) => (
+        <div key={i} style={{
+          width:3, borderRadius:2,
+          background:"rgba(74,124,66,0.75)",
+          height: isPlaying ? undefined : h,
+          animation: isPlaying ? `waveBar ${0.45 + i*0.04}s ${i*0.025}s ease-in-out infinite` : "none",
+          transformOrigin:"center",
+          '--bar-h': `${h}px`,
+          minHeight: isPlaying ? 4 : h,
+          maxHeight: 32,
+          transition:"height 0.2s"
+        }}/>
+      ))}
+    </div>
+  );
+}
+
+function HistoryCard({ item }) {
+  const hasAudio = !!(item.audio_url);
+  const { isPlaying, position, currentTime, duration, toggle, seek, fmt } = useAudioPlayer(hasAudio ? item.audio_url : null);
+
+  return (
+    <div style={{
+      background: isPlaying ? "rgba(23,32,24,1)" : "var(--dark-card)",
+      border: `1.5px solid ${isPlaying ? "rgba(74,124,66,0.5)" : "rgba(255,255,255,0.07)"}`,
+      borderRadius:18, padding:16,
+      transition:"all 0.3s",
+      boxShadow: isPlaying ? "0 4px 20px rgba(74,124,66,0.12)" : "none"
+    }}>
+      {/* Top Row */}
+      <div style={{display:"flex",alignItems:"center",gap:14}}>
+        <div style={{width:50,height:50,borderRadius:13,background:"linear-gradient(135deg,#2d5a27,#4a7c42)",
+          display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}}>
+          <Ic d={PATH.pin} size={22} color="rgba(255,255,255,0.5)"/>
+          <div style={{position:"absolute",top:-4,right:-4,width:17,height:17,borderRadius:"50%",
+            background:"var(--dark-bg)",border:"1.5px solid var(--dark-card)",
+            display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Ic d={PATH.mic} size={9} color="var(--sage)"/>
+          </div>
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:15,fontWeight:700,color:"var(--dt)",
+            overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.place_name}</div>
+          <div style={{display:"flex",alignItems:"center",gap:5,marginTop:3}}>
+            <Ic d={PATH.pin} size={11} color="var(--rose)"/>
+            <span style={{fontSize:12,color:"var(--ds)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.location_name}</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginTop:5}}>
+            <span style={{fontSize:11,color:"var(--dm)"}}>{new Date(item.created_at).toLocaleDateString('tr-TR')}</span>
+            {item.duration_str && <>
+              <div style={{width:3,height:3,borderRadius:"50%",background:"rgba(255,255,255,0.2)"}}/>
+              <span style={{fontSize:11,color:"var(--sage)",fontWeight:600}}>{item.duration_str}</span>
+            </>}
+          </div>
+        </div>
+        {hasAudio && (
+          <div onClick={toggle} style={{
+            width:44,height:44,borderRadius:"50%",cursor:"pointer",flexShrink:0,
+            background: isPlaying ? "var(--meadow)" : "rgba(74,124,66,0.18)",
+            border:`1.5px solid ${isPlaying ? "var(--meadow)" : "rgba(74,124,66,0.4)"}`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            boxShadow: isPlaying ? "0 0 16px rgba(74,124,66,0.4)" : "none",
+            transition:"all 0.25s"
+          }}>
+            <Ic d={isPlaying ? PATH.pause : PATH.play} size={22} color="#fff"/>
+          </div>
+        )}
+      </div>
+
+      {/* Audio Player Panel */}
+      {hasAudio && (
+        <div style={{
+          marginTop: isPlaying || position > 0 ? 14 : 0,
+          maxHeight: isPlaying || position > 0 ? 120 : 0,
+          overflow:"hidden", transition:"max-height 0.35s ease, margin-top 0.35s ease"
+        }}>
+          <Waveform isPlaying={isPlaying}/>
+          {/* Progress bar */}
+          <input type="range" min={0} max={1} step={0.001}
+            value={position}
+            onChange={e => seek(parseFloat(e.target.value))}
+            style={{
+              width:"100%", height:4, cursor:"pointer", accentColor:"var(--meadow)",
+              background:`linear-gradient(to right, var(--meadow) ${position*100}%, rgba(255,255,255,0.1) ${position*100}%)`,
+              borderRadius:2, outline:"none", border:"none", appearance:"none", WebkitAppearance:"none",
+              marginBottom:6
+            }}
+          />
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontFamily:"monospace"}}>{fmt(currentTime)}</span>
+            <div style={{display:"flex",gap:12,alignItems:"center"}}>
+              {/* -10s */}
+              <div onClick={() => seek(Math.max(0,(currentTime-10)/(duration||1)))} style={{cursor:"pointer",opacity:0.5}}>
+                <Ic d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" size={18} color="rgba(255,255,255,0.6)"/>
+              </div>
+              {/* +10s */}
+              <div onClick={() => seek(Math.min(1,(currentTime+10)/(duration||1)))} style={{cursor:"pointer",opacity:0.5}}>
+                <Ic d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z" size={18} color="rgba(255,255,255,0.6)"/>
+              </div>
+            </div>
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontFamily:"monospace"}}>{fmt(duration)}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HistoryScreen({ token }) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/user/history`, { headers: { 'Authorization': `Bearer ${token}` } })
+      .then(res => res.json())
+      .then(d => {
+        setData(d);
+        setLoading(false);
+      })
+      .catch(e => {
+        console.error(e);
+        setLoading(false);
+      });
+  }, [token]);
+
+  return (
+    <div style={{height:"100%",background:"var(--dark-bg)",display:"flex",flexDirection:"column", animation:"fadeUp 0.4s ease"}}>
+      <div style={{padding:"20px 24px 10px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:28,color:"var(--dt)"}}>Geçmiş</div>
+          <div style={{fontSize:13,color:"var(--ds)",marginTop:4}}>
+            <span style={{color:"var(--sage)",fontWeight:600}}>{data.length}</span> analiz kaydedildi
+          </div>
+        </div>
+      </div>
+
+      <div style={{flex:1,overflowY:"auto",padding:"10px 20px",display:"flex",flexDirection:"column",gap:12}}>
+        {loading ? (
+           <div style={{textAlign:"center", color:"var(--ds)", padding:40}}>Yükleniyor...</div>
+        ) : data.length === 0 ? (
+           <div style={{textAlign:"center", color:"var(--ds)", padding:40}}>Henüz hiç geçmiş yok.</div>
+        ) : (
+          data.map(item => (
+            <HistoryCard key={item.id} item={item} />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// LoginScreen
+function LoginScreen({ onLogin }) {
+  const [tab, setTab] = useState("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submitForm = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      if (tab === "register") {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({email, password, full_name: name})
         });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
+        if (!res.ok) {
+          const e = await res.json();
+          throw new Error(e.detail || "Kayıt başarısız");
         }
+      }
+      
+      const formData = new URLSearchParams();
+      formData.append("username", email);
+      formData.append("password", password);
+      
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: formData.toString()
+      });
+      if (!res.ok) {
+        const e = await res.json();
+        throw new Error(e.detail || "Giriş başarısız");
+      }
+      const data = await res.json();
+      onLogin(data.access_token);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
-        });
+  return (
+    <div className="glass-panel" style={{display:"flex", flexDirection:"column", width:"100%"}}>
+      <div style={{display:"flex", justifyContent:"center", marginBottom:30}}>
+        <div style={{
+          width:60, height:60, borderRadius:18,
+          background:"linear-gradient(135deg, rgba(74,124,66,0.3), rgba(201,116,122,0.15))",
+          border:"1px solid rgba(122,173,112,0.25)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          boxShadow:"0 8px 24px rgba(0,0,0,0.4)"
+        }}>
+          <Ic d={PATH.wave} size={32} color="var(--sage)"/>
+        </div>
+      </div>
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
-        });
+      <div style={{textAlign:"center", marginBottom:24}}>
+        <div style={{ fontFamily:"'DM Serif Display',serif", fontSize:32, color:"rgba(255,255,255,0.95)", lineHeight:1.15, marginBottom:8 }}>
+          {tab==="login" ? "Tekrar hoş geldin" : "Hesap oluştur"}
+        </div>
+        <div style={{fontSize:15, color:"rgba(255,255,255,0.38)"}}>
+          {tab==="login" ? "Sesli rehbere devam et" : "Dünyayı keşfetmeye başla"}
+        </div>
+      </div>
 
-        dropZone.addEventListener('drop', (e) => {
-            let dt = e.dataTransfer;
-            let files = dt.files;
-            handleFiles(files);
-        });
+      <div style={{
+        display:"flex", borderRadius:12, overflow:"hidden", background:"rgba(255,255,255,0.05)",
+        border:"1px solid rgba(255,255,255,0.08)", marginBottom:24
+      }}>
+        {["login","register"].map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{
+            flex:1, height:42, border:"none", cursor:"pointer",
+            background: tab===t ? "rgba(74,124,66,0.3)" : "transparent",
+            borderRadius:tab===t ? 10 : 0,
+            fontSize:14, fontWeight:600, fontFamily:"'DM Sans',sans-serif",
+            color: tab===t ? "var(--sage)" : "rgba(255,255,255,0.3)",
+            transition:"all 0.2s"
+          }}>
+            {t==="login" ? "Giriş Yap" : "Kayıt Ol"}
+          </button>
+        ))}
+      </div>
 
-        fileInput.addEventListener('change', function() {
-            handleFiles(this.files);
-        });
+      {tab==="register" && (
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.35)", letterSpacing:"0.1em", marginBottom:8}}>AD SOYAD</div>
+          <div style={{
+            height:56, borderRadius:14, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.1)",
+            display:"flex", alignItems:"center", padding:"0 16px", gap:12
+          }}>
+            <input type="text" placeholder="Ad Soyad" value={name} onChange={e=>setName(e.target.value)} />
+          </div>
+        </div>
+      )}
 
-        // Dosya Seçimi ve Önizleme
-        function handleFiles(files) {
-            if (files.length > 0) {
-                selectedFile = files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.src = e.target.result;
-                    dropZone.style.display = 'none';
-                    previewContainer.style.display = 'block';
-                    resultContainer.style.display = 'none';
-                }
-                reader.readAsDataURL(selectedFile);
-            }
-        }
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.35)", letterSpacing:"0.1em", marginBottom:8}}>E-POSTA</div>
+        <div style={{
+          height:56, borderRadius:14, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.1)",
+          display:"flex", alignItems:"center", padding:"0 16px", gap:12
+        }}>
+          <Ic d={PATH.mail} size={20} color="var(--sage)"/>
+          <input type="email" placeholder="ornek@mail.com" value={email} onChange={e=>setEmail(e.target.value)} />
+        </div>
+      </div>
 
-        // API İstediği Atma
-        analyzeBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.35)", letterSpacing:"0.1em", marginBottom:8}}>ŞİFRE</div>
+        <div style={{
+          height:56, borderRadius:14, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.1)",
+          display:"flex", alignItems:"center", padding:"0 16px", gap:12
+        }}>
+          <Ic d={PATH.lock} size={20} color="var(--sage)"/>
+          <input type="password" placeholder="••••••••" value={password} onChange={e=>setPassword(e.target.value)} />
+        </div>
+      </div>
 
-            // UI'ı Yükleniyor durumuna al
-            analyzeBtn.disabled = true;
-            loader.style.display = 'flex';
-            previewContainer.style.display = 'none';
+      {error && <div style={{color:"var(--rose)", fontSize:13, marginBottom:16, textAlign:"center"}}>{error}</div>}
 
-            // Veriyi Hazırla
-            const formData = new FormData();
-            formData.append('image', selectedFile);
-            formData.append('lang', 'tr');
+      <button className="btn-primary" onClick={submitForm} disabled={loading} style={{marginTop:8}}>
+        {loading ? <div className="spinner" style={{width:20, height:20, borderWidth:2}}/> : (
+          <>{tab==="login" ? "Giriş Yap" : "Hesap Oluştur"} <Ic d={PATH.arrow} size={20} color="#fff"/></>
+        )}
+      </button>
+    </div>
+  );
+}
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    body: formData
-                });
+function MainScreen({ token, onLogout }) {
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef(null);
+  const audioRef = useRef(null);
 
-                if (!response.ok) throw new Error(`API Hatası: ${response.status}`);
+  const handleAnalyze = async (selectedFile) => {
+    if (!selectedFile) return;
+    setFile(selectedFile);
+    setLoading(true);
+    setError("");
+    setResult(null);
 
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    // Verileri ekrana yaz
-                    descText.textContent = result.data.description;
-                    detailsText.textContent = result.data.details || '';
-                    
-                    // Sesi Player'a ekle
-                    if (result.data.audio_url) {
-                        audioPlayer.src = result.data.audio_url;
-                        // Chrome vs. otomatik oynatmayı engelleyebilir, try-catch içine alıyoruz
-                        audioPlayer.play().catch(e => console.log("Otomatik ses çalma engellendi:", e));
-                    }
-                    
-                    // Sonucu göster
-                    loader.style.display = 'none';
-                    resultContainer.style.display = 'block';
-                } else {
-                    throw new Error(result.message || 'Bilinmeyen bir hata oluştu');
-                }
-            } catch (error) {
-                alert('Analiz sırasında bir ağ hatası oluştu. Backend sunucusunun çalıştığından emin olun.\n' + error.message);
-                loader.style.display = 'none';
-                previewContainer.style.display = 'block';
-                analyzeBtn.disabled = false;
-            }
-        });
-    </script>
+    const formData = new FormData();
+    formData.append("image", selectedFile);
+    formData.append("lang", "tr");
+
+    try {
+      const res = await fetch(`${API_BASE}/user/analyze-authenticated`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      if (!res.ok) throw new Error("Analiz başarısız oldu.");
+      const data = await res.json();
+      setResult(data.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="glass-panel" style={{display:"flex", flexDirection:"column", width:"100%"}}>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24}}>
+        <div style={{display:"flex", alignItems:"center", gap:12}}>
+           <div style={{ width:40, height:40, borderRadius:12, background:"rgba(122,173,112,0.15)", border:"1px solid rgba(122,173,112,0.2)", display:"flex", alignItems:"center", justifyContent:"center"}}>
+             <Ic d={PATH.wave} size={20} color="var(--sage)"/>
+           </div>
+           <div style={{fontFamily:"'DM Serif Display',serif", fontSize:24, color:"#fff"}}>VoiceGuide</div>
+        </div>
+        <button onClick={onLogout} style={{background:"transparent", border:"none", color:"rgba(255,255,255,0.4)", cursor:"pointer"}}>
+          <Ic d={PATH.logout} size={24}/>
+        </button>
+      </div>
+
+      <input type="file" accept="image/*" style={{display:"none"}} ref={fileInputRef} onChange={e=>handleAnalyze(e.target.files[0])}/>
+
+      {!result && !loading && (
+        <div className="upload-box" onClick={() => fileInputRef.current.click()}>
+           <Ic d={PATH.camera} size={48} color="var(--sage)" />
+           <div style={{fontSize:18, fontWeight:600, marginTop:16, marginBottom:8}}>Görüntü Seçin veya Çekin</div>
+           <div style={{fontSize:13, color:"rgba(255,255,255,0.3)"}}>JPEG, PNG formatları desteklenir</div>
+        </div>
+      )}
+
+      {loading && (
+        <div style={{display:"flex", flexDirection:"column", alignItems:"center", padding:"40px 0"}}>
+          <div className="spinner" style={{width:50, height:50, marginBottom:20}}/>
+          <div style={{fontSize:16, color:"var(--sage)"}}>Yapay zeka analiz ediyor...</div>
+        </div>
+      )}
+
+      {error && <div style={{color:"var(--rose)", textAlign:"center", padding:20}}>{error}</div>}
+
+      {result && (
+        <div style={{animation:"fadeUp 0.6s ease-out"}}>
+          <img src={URL.createObjectURL(file)} style={{width:"100%", maxHeight:300, objectFit:"cover", borderRadius:16, marginBottom:20}}/>
+          
+          <div style={{background:"rgba(0,0,0,0.3)", borderRadius:16, padding:20, marginBottom:16, border:"1px solid rgba(255,255,255,0.05)"}}>
+            <div style={{color:"var(--sage)", fontSize:12, fontWeight:700, letterSpacing:"0.1em", marginBottom:8}}>FİZİKSEL BETİMLEME</div>
+            <div style={{fontSize:16, lineHeight:1.6, color:"rgba(255,255,255,0.9)"}}>{result.description}</div>
+          </div>
+
+          {result.details && (
+            <div style={{background:"rgba(0,0,0,0.3)", borderRadius:16, padding:20, marginBottom:16, border:"1px solid rgba(255,255,255,0.05)"}}>
+              <div style={{color:"var(--gold)", fontSize:12, fontWeight:700, letterSpacing:"0.1em", marginBottom:8}}>TARİHİ & KÜLTÜREL DETAYLAR</div>
+              <div style={{fontSize:16, lineHeight:1.6, color:"rgba(255,255,255,0.9)"}}>{result.details}</div>
+            </div>
+          )}
+
+          {result.audio_url && (
+            <div style={{marginTop:20}}>
+              <audio src={result.audio_url} controls autoPlay style={{width:"100%", borderRadius:999, height:48, outline:"none"}}></audio>
+            </div>
+          )}
+
+          <button onClick={() => { setResult(null); setFile(null); }} style={{background:"transparent", color:"rgba(255,255,255,0.4)", border:"none", width:"100%", padding:16, marginTop:10, cursor:"pointer", fontWeight:600}}>
+             ← Yeni Fotoğraf Analiz Et
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
 </body>
 </html>

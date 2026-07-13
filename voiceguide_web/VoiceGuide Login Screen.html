@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VoiceGuide AI — Login Screen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #080f09; font-family: 'DM Sans', sans-serif; }
+:root {
+  --forest:  #2d5a27; --meadow: #4a7c42; --sage: #7aad70;
+  --mist:    #e8f4e6; --canvas: #f4faf2;
+  --rose:    #c9747a; --blush:  #e8b4b7;
+  --gold:    #c9a84c; --cream:  #f5edd8;
+  --slate:   #1e2d3d; --dusk:   #3a4f63; --fog:   #7a8fa0;
+  /* dark surfaces */
+  --dark-bg:      #080f09;
+  --dark-surface: #111a12;
+  --dark-card:    #172018;
+  --dark-border:  rgba(255,255,255,0.09);
+  --dark-border-focus: rgba(122,173,112,0.7);
+  --dark-text:    rgba(255,255,255,0.92);
+  --dark-sub:     rgba(255,255,255,0.45);
+  --dark-muted:   rgba(255,255,255,0.22);
+}
+@keyframes fadeUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pulseRing { 0%,100%{transform:scale(1);opacity:0.6} 50%{transform:scale(1.12);opacity:0} }
+@keyframes waveBar  { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+@keyframes shimmer  { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+/* ─── ICONS ─── */
+function Ic({ d, size=24, color="currentColor" }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill={color} aria-hidden="true"><path d={d}/></svg>;
+}
+const PATH = {
+  wave:   "M3 9c1.5 0 1.5 2 3 2s1.5-2 3-2 1.5 2 3 2 1.5-2 3-2 1.5 2 3 2v2c-1.5 0-1.5-2-3-2s-1.5 2-3 2-1.5-2-3-2-1.5 2-3 2-1.5-2-3-2V9zm0 6c1.5 0 1.5 2 3 2s1.5-2 3-2 1.5 2 3 2 1.5-2 3-2 1.5 2 3 2v2c-1.5 0-1.5-2-3-2s-1.5 2-3 2-1.5-2-3-2-1.5 2-3 2-1.5-2-3-2v-2z",
+  mail:   "M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z",
+  lock:   "M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z",
+  eye:    "M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z",
+  eyeOff: "M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z",
+  mic:    "M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v7a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm-7 9h2a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.92V21h3v2H8v-2h3v-2.08A7 7 0 0 1 5 12z",
+  arrow:  "M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z",
+  check:  "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
+  finger: "M13.5 1.5C12.12 1.5 11 2.62 11 4v7.5l-1.5-1.5c-.58-.59-1.53-.59-2.12 0-.58.58-.58 1.53 0 2.12l4.94 4.94C13.4 18.12 14.9 19 16.5 19c2.76 0 5-2.24 5-5V9c0-1.38-1.12-2.5-2.5-2.5-.34 0-.67.07-.96.19C17.72 5.86 16.96 5 16 5c-.36 0-.69.1-.97.27C14.7 4.49 14.15 4 13.5 4V1.5z M9 4.5C7.62 4.5 6.5 5.62 6.5 7v7l-1-1c-.39-.39-1.02-.39-1.41 0s-.39 1.02 0 1.41l4 4c.39.39 1.02.39 1.41 0l4-4c.39-.39.39-1.02 0-1.41s-1.02-.39-1.41 0L11 14V7c0-1.38-1.12-2.5-2.5-2.5H9z",
+  apple:  "M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z",
+  google: "M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z",
+};
+
+/* ─── PHONE FRAME ─── */
+function PhoneFrame({ children, width=390, height=844, label, variant, active, onClick }) {
+  const scale = 0.68;
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display:"flex", flexDirection:"column", alignItems:"center", gap:14,
+        cursor: onClick ? "pointer" : "default"
+      }}
+    >
+      <div style={{
+        fontSize:10, fontWeight:700, letterSpacing:"0.12em", textTransform:"uppercase",
+        color: active ? "var(--sage)" : "rgba(255,255,255,0.3)",
+        padding:"4px 12px", borderRadius:6,
+        background: active ? "rgba(122,173,112,0.12)" : "transparent",
+        border: active ? "1px solid rgba(122,173,112,0.3)" : "1px solid transparent",
+        transition:"all 0.2s"
+      }}>{label}</div>
+
+      <div style={{
+        width: width*scale, height: height*scale,
+        borderRadius: 44*scale,
+        background:"#0c1410",
+        border: active ? "2px solid rgba(122,173,112,0.5)" : "2px solid rgba(255,255,255,0.07)",
+        boxShadow: active
+          ? "0 0 0 4px rgba(122,173,112,0.08), 0 24px 64px rgba(0,0,0,0.7)"
+          : "0 16px 48px rgba(0,0,0,0.5)",
+        overflow:"hidden", position:"relative",
+        transition:"border 0.2s, box-shadow 0.2s", flexShrink:0
+      }}>
+        {/* notch */}
+        <div style={{
+          position:"absolute", top:0, left:"50%", transform:"translateX(-50%)",
+          width:110*scale, height:32*scale,
+          background:"#0c1410",
+          borderBottomLeftRadius:16*scale, borderBottomRightRadius:16*scale,
+          zIndex:20
+        }}/>
+        {/* status bar */}
+        <div style={{
+          position:"absolute", top:0, left:0, right:0, height:44*scale,
+          display:"flex", alignItems:"flex-end", justifyContent:"space-between",
+          padding:`0 ${20*scale}px ${8*scale}px`, zIndex:19
+        }}>
+          <span style={{fontSize:10*scale, fontWeight:600, color:"rgba(255,255,255,0.75)"}}>9:41</span>
+          <div style={{display:"flex", gap:4*scale, alignItems:"center"}}>
+            <svg width={14*scale} height={10*scale} viewBox="0 0 14 10" fill="rgba(255,255,255,0.7)">
+              <rect x="0" y="6" width="2" height="4" rx="0.5"/><rect x="3" y="4" width="2" height="6" rx="0.5"/>
+              <rect x="6" y="2" width="2" height="8" rx="0.5"/><rect x="9" y="0" width="2" height="10" rx="0.5"/>
+            </svg>
+            <svg width={20*scale} height={10*scale} viewBox="0 0 20 10" fill="rgba(255,255,255,0.7)">
+              <rect x="0.5" y="0.5" width="17" height="9" rx="2" stroke="rgba(255,255,255,0.5)" strokeWidth="1" fill="none"/>
+              <rect x="1.5" y="1.5" width="13" height="7" rx="1.5"/>
+              <rect x="18" y="3" width="1.5" height="4" rx="0.75"/>
+            </svg>
+          </div>
+        </div>
+        {/* screen */}
+        <div style={{ position:"absolute", inset:0, paddingTop:44*scale, overflow:"hidden" }}>
+          {children}
+        </div>
+        {/* home indicator */}
+        <div style={{
+          position:"absolute", bottom:8*scale, left:"50%", transform:"translateX(-50%)",
+          width:110*scale, height:4*scale, borderRadius:2*scale,
+          background:"rgba(255,255,255,0.28)", zIndex:20
+        }}/>
+      </div>
+
+      {/* variant badge */}
+      <div style={{
+        fontSize:10, fontFamily:"'DM Mono',monospace", color:"rgba(255,255,255,0.2)",
+        letterSpacing:"0.06em"
+      }}>{variant}</div>
+    </div>
+  );
+}
+
+const S = 0.68;
+
+/* ═══════════════════════════════════
+   VARIANT A — CENTERED MINIMAL
+   Tek sütun, ortalanmış, geniş beyaz boşluk
+═══════════════════════════════════ */
+function VariantA() {
+  const [showPass, setShowPass] = useState(false);
+  const [emailFocus, setEmailFocus] = useState(false);
+  const [passFocus, setPassFocus] = useState(true);
+  const [tab, setTab] = useState("login");
+
+  const inputStyle = (focused) => ({
+    width:"100%", height:52*S,
+    borderRadius:14*S,
+    background: focused ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.04)",
+    border: focused ? `1.5px solid rgba(122,173,112,0.7)` : "1.5px solid rgba(255,255,255,0.1)",
+    boxShadow: focused ? "0 0 0 3px rgba(122,173,112,0.12)" : "none",
+    display:"flex", alignItems:"center",
+    padding:`0 ${14*S}px`, gap:10*S,
+    transition:"all 0.2s"
+  });
+
+  return (
+    <div style={{
+      height:"100%",
+      background:"linear-gradient(180deg, #0b1a0c 0%, #080f09 100%)",
+      display:"flex", flexDirection:"column",
+      padding:`${20*S}px ${20*S}px`
+    }}>
+      {/* logo mark */}
+      <div style={{display:"flex", justifyContent:"center", marginBottom:28*S, marginTop:8*S}}>
+        <div style={{
+          width:52*S, height:52*S, borderRadius:16*S,
+          background:"linear-gradient(135deg, rgba(74,124,66,0.3), rgba(201,116,122,0.15))",
+          border:"1px solid rgba(122,173,112,0.25)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          boxShadow:"0 8px 24px rgba(0,0,0,0.4)"
+        }}>
+          <Ic d={PATH.wave} size={26*S} color="var(--sage)"/>
+        </div>
+      </div>
+
+      {/* heading */}
+      <div style={{textAlign:"center", marginBottom:24*S}}>
+        <div style={{
+          fontFamily:"'DM Serif Display',serif",
+          fontSize:26*S, color:"rgba(255,255,255,0.95)", lineHeight:1.15, marginBottom:6*S
+        }}>
+          {tab==="login" ? "Tekrar hoş geldin" : "Hesap oluştur"}
+        </div>
+        <div style={{fontSize:13*S, color:"rgba(255,255,255,0.38)", lineHeight:1.5}}>
+          {tab==="login" ? "Sesli rehbere devam et" : "Ücretsiz başla, dünyayı keşfet"}
+        </div>
+      </div>
+
+      {/* tab toggle */}
+      <div style={{
+        display:"flex", borderRadius:12*S, overflow:"hidden",
+        background:"rgba(255,255,255,0.05)",
+        border:"1px solid rgba(255,255,255,0.08)",
+        marginBottom:20*S
+      }}>
+        {["login","register"].map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{
+            flex:1, height:38*S, border:"none", cursor:"pointer",
+            background: tab===t ? "rgba(74,124,66,0.3)" : "transparent",
+            borderRadius:tab===t ? 10*S : 0,
+            fontSize:13*S, fontWeight:600, fontFamily:"'DM Sans',sans-serif",
+            color: tab===t ? "var(--sage)" : "rgba(255,255,255,0.3)",
+            transition:"all 0.2s",
+            margin: tab===t ? "3*S" : 0
+          }}>
+            {t==="login" ? "Giriş Yap" : "Kayıt Ol"}
+          </button>
+        ))}
+      </div>
+
+      {/* email */}
+      <div style={{marginBottom:12*S}}>
+        <div style={{fontSize:10*S, fontWeight:700, color:"rgba(255,255,255,0.35)", letterSpacing:"0.1em", marginBottom:6*S}}>
+          E-POSTA
+        </div>
+        <div style={inputStyle(emailFocus)}>
+          <Ic d={PATH.mail} size={17*S} color={emailFocus?"var(--sage)":"rgba(255,255,255,0.25)"}/>
+          <span style={{fontSize:14*S, color: emailFocus?"rgba(255,255,255,0.85)":"rgba(255,255,255,0.25)", flex:1}}>
+            {emailFocus ? "ada@ornek.com" : "e-posta adresiniz"}
+          </span>
+        </div>
+      </div>
+
+      {/* password */}
+      <div style={{marginBottom:8*S}}>
+        <div style={{fontSize:10*S, fontWeight:700, color:"rgba(255,255,255,0.35)", letterSpacing:"0.1em", marginBottom:6*S}}>
+          ŞİFRE
+        </div>
+        <div style={inputStyle(passFocus)}>
+          <Ic d={PATH.lock} size={17*S} color={passFocus?"var(--sage)":"rgba(255,255,255,0.25)"}/>
+          <span style={{fontSize:14*S, color:"rgba(255,255,255,0.85)", flex:1, letterSpacing:"0.25em"}}>
+            ••••••••
+          </span>
+          <div onClick={()=>setShowPass(!showPass)} style={{cursor:"pointer", opacity:0.5, display:"flex"}}>
+            <Ic d={showPass?PATH.eyeOff:PATH.eye} size={17*S} color="rgba(255,255,255,0.6)"/>
+          </div>
+        </div>
+      </div>
+
+      {/* forgot */}
+      <div style={{textAlign:"right", marginBottom:20*S}}>
+        <span style={{fontSize:12*S, color:"var(--sage)", fontWeight:500}}>Şifremi unuttum</span>
+      </div>
+
+      {/* primary CTA */}
+      <div style={{
+        width:"100%", height:52*S, borderRadius:14*S,
+        background:"linear-gradient(135deg, var(--meadow), #3d6b36)",
+        display:"flex", alignItems:"center", justifyContent:"center",
+        gap:8*S, cursor:"pointer",
+        boxShadow:"0 6px 20px rgba(74,124,66,0.4)",
+        marginBottom:14*S
+      }}>
+        <span style={{fontSize:15*S, fontWeight:700, color:"#fff"}}>
+          {tab==="login" ? "Giriş Yap" : "Hesap Oluştur"}
+        </span>
+        <Ic d={PATH.arrow} size={17*S} color="#fff"/>
+      </div>
+
+      {/* voice login */}
+      <div style={{
+        width:"100%", height:48*S, borderRadius:14*S,
+        border:"1.5px solid rgba(201,116,122,0.35)",
+        background:"rgba(201,116,122,0.06)",
+        display:"flex", alignItems:"center", justifyContent:"center",
+        gap:8*S, cursor:"pointer", marginBottom:20*S
+      }}>
+        <div style={{position:"relative"}}>
+          <Ic d={PATH.mic} size={17*S} color="var(--rose)"/>
+          <div style={{
+            position:"absolute", inset:-4*S, borderRadius:"50%",
+            border:"1.5px solid rgba(201,116,122,0.5)",
+            animation:"pulseRing 2s infinite"
+          }}/>
+        </div>
+        <span style={{fontSize:13*S, fontWeight:600, color:"var(--rose)"}}>Sesle Giriş</span>
+      </div>
+
+      {/* divider */}
+      <div style={{display:"flex", alignItems:"center", gap:10*S, marginBottom:14*S}}>
+        <div style={{flex:1, height:1, background:"rgba(255,255,255,0.07)"}}/>
+        <span style={{fontSize:11*S, color:"rgba(255,255,255,0.2)"}}>veya</span>
+        <div style={{flex:1, height:1, background:"rgba(255,255,255,0.07)"}}/>
+      </div>
+
+      {/* social */}
+      <div style={{display:"flex", gap:10*S}}>
+        {[{icon:PATH.apple, label:"Apple"},{icon:PATH.google, label:"Google"}].map(s=>(
+          <div key={s.label} style={{
+            flex:1, height:44*S, borderRadius:12*S,
+            border:"1px solid rgba(255,255,255,0.1)",
+            background:"rgba(255,255,255,0.04)",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:7*S, cursor:"pointer"
+          }}>
+            <Ic d={s.icon} size={16*S} color="rgba(255,255,255,0.6)"/>
+            <span style={{fontSize:12*S, fontWeight:500, color:"rgba(255,255,255,0.5)"}}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* terms */}
+      <div style={{textAlign:"center", marginTop:"auto", paddingTop:14*S, fontSize:10*S, color:"rgba(255,255,255,0.18)", lineHeight:1.5}}>
+        Devam ederek <span style={{color:"rgba(255,255,255,0.4)"}}>Gizlilik Politikası</span>'nı kabul edersiniz
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════
+   VARIANT B — SPLIT HERO
+   Üst yarı: görsel hero, alt yarı: form
+═══════════════════════════════════ */
+function VariantB() {
+  const [activeField, setActiveField] = useState("email");
+
+  return (
+    <div style={{height:"100%", background:"#080f09", display:"flex", flexDirection:"column"}}>
+      {/* HERO HALF */}
+      <div style={{
+        height:"38%", position:"relative", overflow:"hidden",
+        background:"linear-gradient(160deg, #1a3a1a 0%, #0f2410 50%, #0b1a0c 100%)",
+        display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-end",
+        paddingBottom:20*S
+      }}>
+        {/* ambient orb */}
+        <div style={{
+          position:"absolute", top:-60*S, left:"50%", transform:"translateX(-50%)",
+          width:220*S, height:220*S, borderRadius:"50%",
+          background:"radial-gradient(circle, rgba(74,124,66,0.18) 0%, transparent 70%)"
+        }}/>
+        {/* rose accent orb */}
+        <div style={{
+          position:"absolute", bottom:-20*S, right:-20*S,
+          width:100*S, height:100*S, borderRadius:"50%",
+          background:"radial-gradient(circle, rgba(201,116,122,0.15) 0%, transparent 70%)"
+        }}/>
+        {/* logo + title */}
+        <div style={{position:"relative", textAlign:"center"}}>
+          <div style={{
+            width:44*S, height:44*S, borderRadius:14*S,
+            background:"rgba(255,255,255,0.08)",
+            border:"1px solid rgba(122,173,112,0.2)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            margin:"0 auto", marginBottom:8*S,
+            backdropFilter:"blur(12px)"
+          }}>
+            <Ic d={PATH.wave} size={22*S} color="var(--sage)"/>
+          </div>
+          <div style={{fontFamily:"'DM Serif Display',serif", fontSize:22*S, color:"#fff", lineHeight:1.1}}>VoiceGuide</div>
+          <div style={{fontSize:10*S, color:"rgba(255,255,255,0.35)", letterSpacing:"0.18em", marginTop:3*S}}>AI · SESLİ REHBER</div>
+        </div>
+      </div>
+
+      {/* FORM HALF */}
+      <div style={{
+        flex:1, background:"var(--dark-surface)",
+        borderTopLeftRadius:24*S, borderTopRightRadius:24*S,
+        marginTop:-12*S, padding:`${22*S}px ${20*S}px ${16*S}px`,
+        display:"flex", flexDirection:"column", gap:0,
+        boxShadow:"0 -8px 32px rgba(0,0,0,0.4)"
+      }}>
+        <div style={{fontFamily:"'DM Serif Display',serif", fontSize:20*S, color:"rgba(255,255,255,0.9)", marginBottom:4*S}}>
+          Hoş geldin
+        </div>
+        <div style={{fontSize:12*S, color:"rgba(255,255,255,0.3)", marginBottom:18*S}}>
+          Sesli rehberine devam et
+        </div>
+
+        {/* email field */}
+        <div style={{marginBottom:12*S}}>
+          <div style={{
+            width:"100%", height:54*S, borderRadius:16*S,
+            background: activeField==="email" ? "rgba(122,173,112,0.08)" : "rgba(255,255,255,0.04)",
+            border: activeField==="email" ? "1.5px solid rgba(122,173,112,0.6)" : "1.5px solid rgba(255,255,255,0.09)",
+            boxShadow: activeField==="email" ? "0 0 0 3px rgba(122,173,112,0.10)" : "none",
+            display:"flex", alignItems:"center", padding:`0 ${14*S}px`, gap:10*S,
+            transition:"all 0.2s"
+          }}>
+            <div style={{
+              width:28*S, height:28*S, borderRadius:8*S,
+              background: activeField==="email" ? "rgba(122,173,112,0.15)" : "rgba(255,255,255,0.06)",
+              display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0
+            }}>
+              <Ic d={PATH.mail} size={14*S} color={activeField==="email"?"var(--sage)":"rgba(255,255,255,0.25)"}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:9*S, fontWeight:700, color:"rgba(255,255,255,0.3)", letterSpacing:"0.08em"}}>E-POSTA</div>
+              <div style={{fontSize:13*S, color: activeField==="email"?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.25)"}}>
+                {activeField==="email" ? "ada@ornek.com" : "e-posta adresiniz"}
+              </div>
+            </div>
+            {activeField==="email" && <Ic d={PATH.check} size={15*S} color="var(--sage)"/>}
+          </div>
+        </div>
+
+        {/* password field */}
+        <div style={{marginBottom:8*S}}>
+          <div style={{
+            width:"100%", height:54*S, borderRadius:16*S,
+            background: activeField==="pass" ? "rgba(122,173,112,0.08)" : "rgba(255,255,255,0.04)",
+            border: activeField==="pass" ? "1.5px solid rgba(122,173,112,0.6)" : "1.5px solid rgba(255,255,255,0.09)",
+            boxShadow: activeField==="pass" ? "0 0 0 3px rgba(122,173,112,0.10)" : "none",
+            display:"flex", alignItems:"center", padding:`0 ${14*S}px`, gap:10*S,
+            transition:"all 0.2s"
+          }}>
+            <div style={{
+              width:28*S, height:28*S, borderRadius:8*S,
+              background: activeField==="pass" ? "rgba(122,173,112,0.15)" : "rgba(255,255,255,0.06)",
+              display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0
+            }}>
+              <Ic d={PATH.lock} size={14*S} color={activeField==="pass"?"var(--sage)":"rgba(255,255,255,0.25)"}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:9*S, fontWeight:700, color:"rgba(255,255,255,0.3)", letterSpacing:"0.08em"}}>ŞİFRE</div>
+              <div style={{fontSize:13*S, color:"rgba(255,255,255,0.85)", letterSpacing:"0.25em"}}>••••••••</div>
+            </div>
+            <Ic d={PATH.eye} size={15*S} color="rgba(255,255,255,0.3)"/>
+          </div>
+        </div>
+
+        <div style={{textAlign:"right", marginBottom:16*S}}>
+          <span style={{fontSize:11*S, color:"var(--sage)", fontWeight:500}}>Şifremi unuttum</span>
+        </div>
+
+        {/* CTA */}
+        <div style={{
+          width:"100%", height:50*S, borderRadius:14*S,
+          background:"linear-gradient(135deg, #4a7c42, #3d6b36)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          gap:8*S, marginBottom:12*S,
+          boxShadow:"0 6px 20px rgba(74,124,66,0.38)"
+        }}>
+          <span style={{fontSize:15*S, fontWeight:700, color:"#fff"}}>Giriş Yap</span>
+          <Ic d={PATH.arrow} size={16*S} color="#fff"/>
+        </div>
+
+        {/* voice */}
+        <div style={{
+          width:"100%", height:44*S, borderRadius:14*S,
+          border:"1.5px solid rgba(201,116,122,0.3)",
+          background:"rgba(201,116,122,0.05)",
+          display:"flex", alignItems:"center", justifyContent:"center", gap:8*S,
+          marginBottom:16*S
+        }}>
+          <div style={{position:"relative", display:"flex", alignItems:"center", justifyContent:"center", width:20*S, height:20*S}}>
+            <Ic d={PATH.mic} size={16*S} color="var(--rose)"/>
+            <div style={{position:"absolute", inset:-3*S, borderRadius:"50%", border:"1px solid rgba(201,116,122,0.4)", animation:"pulseRing 2.5s infinite"}}/>
+          </div>
+          <span style={{fontSize:12*S, fontWeight:600, color:"var(--rose)"}}>Sesle Giriş Yap</span>
+        </div>
+
+        {/* footer */}
+        <div style={{textAlign:"center", marginTop:"auto"}}>
+          <span style={{fontSize:12*S, color:"rgba(255,255,255,0.3)"}}>Hesabın yok mu? </span>
+          <span style={{fontSize:12*S, color:"var(--sage)", fontWeight:600}}>Kayıt ol</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════
+   VARIANT C — VOICE FIRST
+   Mikrofon öncelikli, form ikincil
+═══════════════════════════════════ */
+function VariantC() {
+  const [listening, setListening] = useState(true);
+
+  return (
+    <div style={{
+      height:"100%",
+      background:"#080f09",
+      display:"flex", flexDirection:"column", alignItems:"center"
+    }}>
+      {/* top brand strip */}
+      <div style={{
+        width:"100%", padding:`${12*S}px ${18*S}px`,
+        display:"flex", alignItems:"center", gap:8*S
+      }}>
+        <div style={{
+          width:28*S, height:28*S, borderRadius:8*S,
+          background:"rgba(122,173,112,0.15)", border:"1px solid rgba(122,173,112,0.2)",
+          display:"flex", alignItems:"center", justifyContent:"center"
+        }}>
+          <Ic d={PATH.wave} size={14*S} color="var(--sage)"/>
+        </div>
+        <span style={{fontFamily:"'DM Serif Display',serif", fontSize:14*S, color:"rgba(255,255,255,0.8)"}}>VoiceGuide AI</span>
+      </div>
+
+      {/* VOICE HERO */}
+      <div style={{
+        flex:"0 0 auto",
+        display:"flex", flexDirection:"column", alignItems:"center",
+        paddingTop:16*S, paddingBottom:24*S
+      }}>
+        {/* big mic orb */}
+        <div style={{position:"relative", width:120*S, height:120*S, display:"flex", alignItems:"center", justifyContent:"center"}}>
+          {/* pulsing rings */}
+          {listening && [1,2,3].map(i=>(
+            <div key={i} style={{
+              position:"absolute", inset:0,
+              borderRadius:"50%",
+              border:"1.5px solid rgba(201,116,122,0.35)",
+              animation:`pulseRing ${1.5+i*0.5}s ${i*0.3}s infinite`,
+            }}/>
+          ))}
+          <div style={{
+            width:84*S, height:84*S, borderRadius:"50%",
+            background:listening
+              ? "radial-gradient(circle at 35% 35%, rgba(201,116,122,0.4), rgba(201,116,122,0.15))"
+              : "rgba(255,255,255,0.06)",
+            border:"1.5px solid rgba(201,116,122,0.5)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            boxShadow: listening ? "0 0 40px rgba(201,116,122,0.25)" : "none",
+            cursor:"pointer",
+            transition:"all 0.3s"
+          }} onClick={()=>setListening(!listening)}>
+            <Ic d={PATH.mic} size={32*S} color={listening?"#fff":"rgba(255,255,255,0.3)"}/>
+          </div>
+        </div>
+
+        <div style={{textAlign:"center", marginTop:14*S}}>
+          <div style={{fontFamily:"'DM Serif Display',serif", fontSize:20*S, color:"rgba(255,255,255,0.92)", marginBottom:4*S}}>
+            {listening ? "Sizi dinliyorum" : "Dokunun"}
+          </div>
+          <div style={{fontSize:12*S, color:"rgba(255,255,255,0.35)", lineHeight:1.5}}>
+            {listening
+              ? '"Giriş yap" deyin veya\ne-posta adresinizi söyleyin'
+              : "Sesli giriş için mikrofona dokunun"}
+          </div>
+        </div>
+
+        {/* waveform vis */}
+        {listening && (
+          <div style={{display:"flex", alignItems:"center", gap:3*S, height:28*S, marginTop:16*S}}>
+            {Array.from({length:20},(_,i)=>(
+              <div key={i} style={{
+                width:3*S, borderRadius:2*S, background:"var(--rose)",
+                opacity:0.5+Math.random()*0.5,
+                height:`${(8+Math.sin(i*0.8)*8)*S}px`,
+                animation:`waveBar ${0.6+i*0.05}s ${i*0.04}s ease-in-out infinite`
+              }}/>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* divider with OR */}
+      <div style={{
+        display:"flex", alignItems:"center", gap:12*S,
+        width:`calc(100% - ${36*S}px)`, marginBottom:18*S
+      }}>
+        <div style={{flex:1, height:1, background:"rgba(255,255,255,0.07)"}}/>
+        <span style={{fontSize:11*S, color:"rgba(255,255,255,0.2)", fontWeight:500}}>e-posta ile devam et</span>
+        <div style={{flex:1, height:1, background:"rgba(255,255,255,0.07)"}}/>
+      </div>
+
+      {/* COMPACT FORM */}
+      <div style={{width:`calc(100% - ${36*S}px)`, display:"flex", flexDirection:"column", gap:10*S}}>
+        {/* email */}
+        <div style={{
+          height:50*S, borderRadius:14*S,
+          background:"rgba(255,255,255,0.05)",
+          border:"1.5px solid rgba(255,255,255,0.1)",
+          display:"flex", alignItems:"center", padding:`0 ${14*S}px`, gap:10*S
+        }}>
+          <Ic d={PATH.mail} size={16*S} color="rgba(255,255,255,0.3)"/>
+          <span style={{fontSize:13*S, color:"rgba(255,255,255,0.25)", flex:1}}>E-posta adresi</span>
+        </div>
+        {/* password */}
+        <div style={{
+          height:50*S, borderRadius:14*S,
+          background:"rgba(255,255,255,0.05)",
+          border:"1.5px solid rgba(255,255,255,0.1)",
+          display:"flex", alignItems:"center", padding:`0 ${14*S}px`, gap:10*S
+        }}>
+          <Ic d={PATH.lock} size={16*S} color="rgba(255,255,255,0.3)"/>
+          <span style={{fontSize:13*S, color:"rgba(255,255,255,0.25)", flex:1}}>Şifre</span>
+          <Ic d={PATH.eye} size={15*S} color="rgba(255,255,255,0.2)"/>
+        </div>
+
+        {/* forgot */}
+        <div style={{textAlign:"right"}}>
+          <span style={{fontSize:11*S, color:"var(--sage)"}}>Şifremi unuttum</span>
+        </div>
+
+        {/* CTA */}
+        <div style={{
+          width:"100%", height:50*S, borderRadius:14*S,
+          background:"linear-gradient(135deg, #4a7c42, #3d6b36)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          gap:8*S, boxShadow:"0 6px 20px rgba(74,124,66,0.38)"
+        }}>
+          <span style={{fontSize:15*S, fontWeight:700, color:"#fff"}}>Giriş Yap</span>
+          <Ic d={PATH.arrow} size={16*S} color="#fff"/>
+        </div>
+
+        {/* register link */}
+        <div style={{textAlign:"center", paddingTop:4*S}}>
+          <span style={{fontSize:12*S, color:"rgba(255,255,255,0.3)"}}>Hesabın yok mu? </span>
+          <span style={{fontSize:12*S, color:"var(--sage)", fontWeight:600}}>Kayıt ol →</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════
+   FLUTTER SPEC PANEL
+═══════════════════════════════════ */
+function FlutterSpec({ variant }) {
+  const specs = {
+    A: [
+      { widget:"Scaffold", props:"backgroundColor: AppColors.darkBg, resizeToAvoidBottomInset: true" },
+      { widget:"SafeArea", props:"minimum: EdgeInsets.all(20)" },
+      { widget:"Column + SingleChildScrollView", props:"physics: ClampingScrollPhysics()" },
+      { widget:"Container (logo)", props:"width:56, height:56, decoration: BoxDecoration(borderRadius:16, gradient:LinearGradient(forest→rose/15%))" },
+      { widget:"Text (Heading)", props:"style: AppText.displaySm.copyWith(color:white.92)" },
+      { widget:"SegmentedButton<String>", props:"segments:[ButtonSegment(login), ButtonSegment(register)], style: SegmentedButton.styleFrom(selectedBg:meadow.30)" },
+      { widget:"_VGTextField (custom)", props:"label:'E-POSTA', prefixIcon:Icons.mail, focusBorderColor:AppColors.sage" },
+      { widget:"_VGTextField (custom)", props:"label:'ŞİFRE', obscure:true, suffixIcon:visibility_toggle" },
+      { widget:"TextButton", props:"'Şifremi unuttum', style:TextButton.styleFrom(foregroundColor:AppColors.sage)" },
+      { widget:"ElevatedButton (Primary CTA)", props:"height:52, borderRadius:14, gradient:meadow→forest, child:Row[Text,Icon(arrow_forward)]" },
+      { widget:"OutlinedButton (Voice)", props:"height:48, borderRadius:14, side:BorderSide(rose,1.5), child:Row[AnimatedMic,Text]" },
+      { widget:"_SocialButton × 2", props:"Apple / Google — height:44, borderRadius:12, border:white.10" },
+      { widget:"Semantics (tüm butonlar)", props:"label:'Giriş yap butonu', hint:'Çift dokunun to activate', button:true" },
+    ],
+    B: [
+      { widget:"Stack (hero+form)", props:"Ana layout — hero üstte sabit, form BottomSheet benzeri" },
+      { widget:"Container (Hero)", props:"height: screen.height * 0.38, gradient: 3-stop yeşil, ClipRRect(r:0)" },
+      { widget:"DraggableScrollableSheet", props:"initialChildSize:0.62, minChildSize:0.62, maxChildSize:0.95 — form paneli" },
+      { widget:"_InlineTextField (B varyant)", props:"height:54, icon container: 28×28 borderRadius:8, 2 satır label+value" },
+      { widget:"AnimatedContainer", props:"focusBorderColor geçişi 200ms — sage glow on focus" },
+      { widget:"ElevatedButton (CTA)", props:"gradient, height:50, borderRadius:14" },
+      { widget:"OutlinedButton (Voice)", props:"rose accent, AnimatedMicWidget, pulseRing overlay" },
+      { widget:"RichText", props:"'Hesabın yok mu? Kayıt ol' — TextSpan ile sage renk" },
+    ],
+    C: [
+      { widget:"Column + Expanded", props:"Mic hero expandable, form alt kısımda sabit" },
+      { widget:"GestureDetector (Mic Orb)", props:"onTap → listenState toggle, hapticFeedback.mediumImpact()" },
+      { widget:"AnimatedContainer (Orb)", props:"boxShadow fade in/out 300ms — rose glow when listening" },
+      { widget:"Stack (pulse rings)", props:"3× AnimatedWidget concentric rings — pulseRing anim" },
+      { widget:"_WaveformWidget", props:"CustomPainter — 20 bars, ScaleY animation on listening" },
+      { widget:"Text (accessibility label)", props:"Semantics: 'Mikrofon aktif, giriş için konuşun'" },
+      { widget:"SpeechRecognizer", props:"speech_to_text package — listenFor:30s, localeId:tr_TR" },
+      { widget:"Compact _VGTextField × 2", props:"email + şifre — aynı height:50, sage focus" },
+      { widget:"ElevatedButton (CTA)", props:"gradient meadow, height:50" },
+    ]
+  };
+
+  const items = specs[variant] || specs.A;
+
+  return (
+    <div style={{
+      background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.07)",
+      borderRadius:16, overflow:"hidden"
+    }}>
+      <div style={{
+        padding:"14px 20px", borderBottom:"1px solid rgba(255,255,255,0.07)",
+        display:"flex", alignItems:"center", gap:10,
+        background:"rgba(74,124,66,0.08)"
+      }}>
+        <div style={{display:"flex", gap:6}}>
+          <div style={{width:10, height:10, borderRadius:"50%", background:"#ff5f57"}}/>
+          <div style={{width:10, height:10, borderRadius:"50%", background:"#ffbd2e"}}/>
+          <div style={{width:10, height:10, borderRadius:"50%", background:"#28c840"}}/>
+        </div>
+        <span style={{fontSize:11, fontFamily:"'DM Mono',monospace", color:"rgba(255,255,255,0.3)", marginLeft:4}}>
+          flutter · variant_{variant.toLowerCase()}_spec
+        </span>
+      </div>
+      <div style={{padding:"16px 20px", display:"flex", flexDirection:"column", gap:10}}>
+        {items.map((item, i) => (
+          <div key={i} style={{
+            display:"grid", gridTemplateColumns:"180px 1fr", gap:12, alignItems:"start",
+            paddingBottom:10, borderBottom: i<items.length-1?"1px solid rgba(255,255,255,0.05)":"none"
+          }}>
+            <div style={{
+              fontSize:11, fontFamily:"'DM Mono',monospace",
+              color:"var(--sage)", fontWeight:500, lineHeight:1.5
+            }}>{item.widget}</div>
+            <div style={{fontSize:11, color:"rgba(255,255,255,0.35)", lineHeight:1.6, fontFamily:"'DM Mono',monospace"}}>
+              {item.props}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════
+   ACCESSIBILITY PANEL
+═══════════════════════════════════ */
+function A11yPanel() {
+  const rules = [
+    { title:"Semantics wrapper", desc:"Her TextInput, buton ve ikona Semantics(label, hint, button) sarılı.", tag:"TalkBack", color:"var(--sage)" },
+    { title:"Minimum touch target", desc:"Tüm tıklanabilir alanlar min 48×48dp — WCAG 2.5.5 Success Criterion.", tag:"Motor", color:"var(--meadow)" },
+    { title:"Kontrast oranı", desc:"Tüm metinler ≥ 4.5:1 (normal), ≥ 3:1 (büyük/bold). Sage #7aad70 üzerinde beyaz: 4.8:1 ✓", tag:"Görme", color:"var(--gold)" },
+    { title:"Sesle giriş (Voice Login)", desc:"SpeechRecognizer ile e-posta + şifre sesle doldurulabilir. Alternatif akış zorunlu.", tag:"Görme Engelli", color:"var(--rose)" },
+    { title:"Şifre alanı okuma", desc:"obscureText:true iken TalkBack şifreyi okumaz; 'Şifre alanı, gizli' der.", tag:"Gizlilik", color:"var(--sage)" },
+    { title:"Error state", desc:"TextField hata: kırmızı border + Semantics(liveRegion:true) ile ekran okuyucu bildirir.", tag:"Feedback", color:"var(--rose)" },
+    { title:"Odak sırası", desc:"FocusTraversalGroup ile: Logo → Tab → Email → Şifre → Giriş → Sesli → Social.", tag:"Klavye", color:"var(--meadow)" },
+    { title:"Büyük font desteği", desc:"MediaQuery.textScaleFactor ile tüm fontlar dinamik ölçeklenir. Min 14sp, max 2.0×.", tag:"Görme", color:"var(--gold)" },
+    { title:"Haptic feedback", desc:"Giriş başarılı: HapticFeedback.lightImpact(). Hata: notificationFeedback(error).", tag:"Motor", color:"var(--sage)" },
+    { title:"Reduced motion", desc:"MediaQuery.disableAnimations ise pulse ring ve waveform animasyonları durdurulur.", tag:"Vestibular", color:"var(--fog)" },
+  ];
+  return (
+    <div style={{display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:12}}>
+      {rules.map((r,i)=>(
+        <div key={i} style={{
+          background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)",
+          borderRadius:12, padding:"14px 16px"
+        }}>
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
+            <div style={{fontSize:13, fontWeight:600, color:"rgba(255,255,255,0.85)"}}>{r.title}</div>
+            <div style={{
+              fontSize:9, fontWeight:700, letterSpacing:"0.07em",
+              color:r.color, background:`${r.color}18`,
+              border:`1px solid ${r.color}40`,
+              borderRadius:4, padding:"2px 7px", whiteSpace:"nowrap"
+            }}>{r.tag}</div>
+          </div>
+          <div style={{fontSize:12, color:"rgba(255,255,255,0.35)", lineHeight:1.6}}>{r.desc}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════
+   LAYOUT SPEC DIAGRAM
+═══════════════════════════════════ */
+function LayoutSpec({ variant }) {
+  const layouts = {
+    A: [
+      {h:72,  label:"Logo Mark",     color:"rgba(74,124,66,0.15)",  border:"rgba(74,124,66,0.3)",  note:"56×56dp · borderRadius:16 · wave icon"},
+      {h:56,  label:"Heading + Sub", color:"rgba(255,255,255,0.04)", border:"rgba(255,255,255,0.08)",note:"DM Serif Display 26sp · opacity 0.92"},
+      {h:44,  label:"Tab Toggle",    color:"rgba(201,168,76,0.08)",  border:"rgba(201,168,76,0.2)", note:"SegmentedButton — login / register"},
+      {h:60,  label:"Email Field",   color:"rgba(122,173,112,0.08)", border:"rgba(122,173,112,0.4)",note:"height:52 · icon+label+value · sage focus ring"},
+      {h:60,  label:"Password Field",color:"rgba(122,173,112,0.08)", border:"rgba(122,173,112,0.4)",note:"height:52 · obscure · eye toggle"},
+      {h:32,  label:"Forgot Password",color:"transparent",           border:"transparent",           note:"TextButton · TextAlign.right · sage color"},
+      {h:60,  label:"Primary CTA",   color:"rgba(74,124,66,0.35)",  border:"rgba(74,124,66,0.5)",  note:"height:52 · gradient · ElevatedButton"},
+      {h:56,  label:"Voice Login",   color:"rgba(201,116,122,0.08)", border:"rgba(201,116,122,0.35)",note:"height:48 · OutlinedButton · pulse anim"},
+      {h:24,  label:"Divider / OR",  color:"transparent",            border:"transparent",           note:"Row[Divider, Text('veya'), Divider]"},
+      {h:56,  label:"Social Buttons",color:"rgba(255,255,255,0.04)", border:"rgba(255,255,255,0.1)", note:"Row[Apple, Google] · flex:1 each"},
+      {h:36,  label:"Terms Text",    color:"transparent",            border:"transparent",           note:"TextSpan · fontSize:10 · opacity 0.18"},
+    ],
+    B: [
+      {h:88,  label:"Hero (38%)",     color:"rgba(26,58,26,0.6)",   border:"rgba(74,124,66,0.2)", note:"Stack — ambient orb + logo + title"},
+      {h:32,  label:"Logo + Title",   color:"rgba(74,124,66,0.1)",  border:"rgba(74,124,66,0.2)", note:"44×44 container + DM Serif 22sp"},
+      {h:80,  label:"Form Sheet",     color:"rgba(17,26,18,0.8)",   border:"rgba(255,255,255,0.06)",note:"borderRadius:24 top — DraggableScrollableSheet"},
+      {h:60,  label:"Email (inline)", color:"rgba(122,173,112,0.08)",border:"rgba(122,173,112,0.4)",note:"height:54 · 2-line içerik: label + value"},
+      {h:60,  label:"Pass (inline)",  color:"rgba(122,173,112,0.08)",border:"rgba(122,173,112,0.4)",note:"height:54 · obscure · eye icon"},
+      {h:60,  label:"Primary CTA",   color:"rgba(74,124,66,0.35)", border:"rgba(74,124,66,0.5)", note:"height:50 · gradient"},
+      {h:52,  label:"Voice Button",  color:"rgba(201,116,122,0.08)",border:"rgba(201,116,122,0.3)",note:"height:44 · rose outlined"},
+      {h:32,  label:"Register Link", color:"transparent",           border:"transparent",          note:"RichText center · sage 'Kayıt ol'"},
+    ],
+    C: [
+      {h:40,  label:"Brand Strip",    color:"rgba(74,124,66,0.08)", border:"rgba(74,124,66,0.15)",note:"28×28 logo + 'VoiceGuide AI'"},
+      {h:140, label:"Mic Orb Hero",   color:"rgba(201,116,122,0.1)",border:"rgba(201,116,122,0.3)",note:"84×84 orb + 3 pulse rings + label"},
+      {h:36,  label:"Waveform Bars",  color:"rgba(201,116,122,0.06)",border:"rgba(201,116,122,0.2)",note:"CustomPainter — 20 bars · listening only"},
+      {h:28,  label:"Divider",        color:"transparent",           border:"transparent",          note:"'e-posta ile devam et'"},
+      {h:56,  label:"Email Field",    color:"rgba(255,255,255,0.04)",border:"rgba(255,255,255,0.1)",note:"height:50 · compact · icon+placeholder"},
+      {h:56,  label:"Pass Field",     color:"rgba(255,255,255,0.04)",border:"rgba(255,255,255,0.1)",note:"height:50 · compact"},
+      {h:24,  label:"Forgot",        color:"transparent",           border:"transparent",          note:"TextAlign.right · sage"},
+      {h:56,  label:"Primary CTA",   color:"rgba(74,124,66,0.35)", border:"rgba(74,124,66,0.5)", note:"height:50 · gradient"},
+      {h:30,  label:"Register Link", color:"transparent",           border:"transparent",          note:"center · sage bold"},
+    ]
+  };
+
+  const items = layouts[variant] || layouts.A;
+  const total = items.reduce((a,b)=>a+b.h,0);
+
+  return (
+    <div style={{display:"flex", flexDirection:"column", gap:3}}>
+      {items.map((item,i)=>(
+        <div key={i} style={{
+          height:item.h, borderRadius:8,
+          background:item.color, border:`1px solid ${item.border}`,
+          display:"flex", alignItems:"center",
+          padding:"0 14px", gap:12, overflow:"hidden", flexShrink:0
+        }}>
+          <div style={{
+            fontSize:9, fontWeight:700, letterSpacing:"0.08em",
+            color:"rgba(255,255,255,0.5)", whiteSpace:"nowrap", minWidth:80
+          }}>{item.label.toUpperCase()}</div>
+          <div style={{flex:1, height:1, background:"rgba(255,255,255,0.06)"}}/>
+          <div style={{
+            fontSize:10, color:"rgba(255,255,255,0.25)",
+            fontFamily:"'DM Mono',monospace", whiteSpace:"nowrap",
+            overflow:"hidden", textOverflow:"ellipsis", maxWidth:200
+          }}>{item.note}</div>
+          <div style={{
+            fontSize:9, color:"rgba(255,255,255,0.2)",
+            fontFamily:"'DM Mono',monospace", whiteSpace:"nowrap"
+          }}>{item.h}u</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════
+   MAIN APP
+═══════════════════════════════════ */
+function App() {
+  const [tweaks, setTweak] = useTweaks(/*EDITMODE-BEGIN*/{
+    "variant": "B",
+    "section": "a11y",
+    "compareAll": false
+  }/*EDITMODE-END*/);
+
+  const variants = [
+    { id:"A", label:"A — Centered", sub:"Login/Register Tab", comp:<VariantA/> },
+    { id:"B", label:"B — Split Hero", sub:"Form Sheet", comp:<VariantB/> },
+    { id:"C", label:"C — Voice First", sub:"Mic Öncelikli", comp:<VariantC/> },
+  ];
+
+  const activeVariant = variants.find(v=>v.id===tweaks.variant) || variants[0];
+
+  return (
+    <>
+      <TweaksPanel>
+        <TweakSection label="Varyant">
+          <TweakRadio label="Tasarım" options={["A","B","C"]}
+            value={tweaks.variant} onChange={v=>setTweak("variant",v)}/>
+          <TweakToggle label="Tümünü Karşılaştır"
+            value={tweaks.compareAll} onChange={v=>setTweak("compareAll",v)}/>
+        </TweakSection>
+        <TweakSection label="Bölüm">
+          <TweakRadio label="Görünüm"
+            options={["preview","layout","spec","a11y"]}
+            value={tweaks.section} onChange={v=>setTweak("section",v)}/>
+        </TweakSection>
+      </TweaksPanel>
+
+      {/* HEADER */}
+      <div style={{
+        position:"fixed", top:0, left:0, right:0, zIndex:100,
+        background:"rgba(8,15,9,0.92)", backdropFilter:"blur(20px)",
+        borderBottom:"1px solid rgba(255,255,255,0.07)",
+        padding:"14px 32px",
+        display:"flex", alignItems:"center", justifyContent:"space-between"
+      }}>
+        <div style={{display:"flex", alignItems:"center", gap:12}}>
+          <div style={{
+            width:32, height:32, borderRadius:10,
+            background:"linear-gradient(135deg,var(--meadow),var(--rose))",
+            display:"flex", alignItems:"center", justifyContent:"center"
+          }}>
+            <Ic d={PATH.wave} size={18} color="#fff"/>
+          </div>
+          <div>
+            <div style={{fontFamily:"'DM Serif Display',serif", fontSize:17, color:"#fff"}}>
+              VoiceGuide AI — Login Screen
+            </div>
+            <div style={{fontSize:10, color:"rgba(255,255,255,0.3)", letterSpacing:"0.1em"}}>
+              DARK MODE · ACCESSIBILITY FIRST · FLUTTER READY
+            </div>
+          </div>
+        </div>
+
+        {/* section tabs */}
+        <div style={{display:"flex", gap:4}}>
+          {[["preview","Önizleme"],["layout","Layout Spec"],["spec","Flutter Spec"],["a11y","Erişilebilirlik"]].map(([id,label])=>(
+            <button key={id} onClick={()=>setTweak("section",id)} style={{
+              height:32, padding:"0 14px", borderRadius:8, cursor:"pointer",
+              background: tweaks.section===id ? "rgba(74,124,66,0.25)" : "transparent",
+              border: tweaks.section===id ? "1px solid rgba(74,124,66,0.45)" : "1px solid transparent",
+              color: tweaks.section===id ? "var(--sage)" : "rgba(255,255,255,0.3)",
+              fontSize:12, fontWeight:600, fontFamily:"'DM Sans',sans-serif",
+              transition:"all 0.18s"
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{paddingTop:68, minHeight:"100vh", overflowX:"hidden"}}>
+
+        {/* ── PREVIEW ── */}
+        {tweaks.section === "preview" && (
+          <div style={{padding:"40px 40px 60px"}}>
+            <div style={{marginBottom:36}}>
+              <div style={{fontSize:11, fontWeight:700, letterSpacing:"0.12em", color:"rgba(255,255,255,0.25)", marginBottom:6, textTransform:"uppercase"}}>Login · Register</div>
+              <div style={{fontFamily:"'DM Serif Display',serif", fontSize:36, color:"#fff", marginBottom:8}}>3 Varyant</div>
+              <div style={{fontSize:14, color:"rgba(255,255,255,0.35)", maxWidth:540, lineHeight:1.6}}>
+                Tüm varyantlar dark mode, erişilebilirlik odaklı ve Flutter implementasyona hazır. Varyantlar arasında geçmek için Tweaks panelini kullanın.
+              </div>
+            </div>
+
+            {tweaks.compareAll ? (
+              <div style={{display:"flex", flexWrap:"wrap", gap:36, alignItems:"flex-start"}}>
+                {variants.map(v=>(
+                  <div key={v.id} onClick={()=>setTweak("variant",v.id)} style={{cursor:"pointer"}}>
+                    <PhoneFrame label={v.label} variant={v.sub}
+                      active={tweaks.variant===v.id}
+                      onClick={()=>setTweak("variant",v.id)}>
+                      {v.comp}
+                    </PhoneFrame>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{display:"flex", gap:40, flexWrap:"wrap", alignItems:"flex-start"}}>
+                {/* big active phone */}
+                <PhoneFrame label={activeVariant.label} variant={activeVariant.sub} active={true}>
+                  {activeVariant.comp}
+                </PhoneFrame>
+                {/* mini thumbnails */}
+                <div style={{display:"flex", flexDirection:"column", gap:16, paddingTop:28}}>
+                  <div style={{fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.25)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:4}}>Diğer Varyantlar</div>
+                  {variants.filter(v=>v.id!==tweaks.variant).map(v=>(
+                    <PhoneFrame key={v.id} label={v.label} variant={v.sub}
+                      scale={0.38} active={false}
+                      onClick={()=>setTweak("variant",v.id)}>
+                      {v.comp}
+                    </PhoneFrame>
+                  ))}
+                </div>
+
+                {/* design rationale */}
+                <div style={{flex:1, minWidth:280, paddingTop:28, display:"flex", flexDirection:"column", gap:16}}>
+                  <div style={{fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.25)", letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:4}}>Tasarım Gerekçesi</div>
+                  {[
+                    {
+                      id:"A", title:"A — Centered Minimal",
+                      pros:["Login/Register tab ile tek ekranda iki akış","Form odaklı — kullanıcı direk içeriğe girer","Sosyal giriş seçenekleri alt kısımda temiz"],
+                      best:"Standart kullanıcı kitlesi için önerilen"
+                    },
+                    {
+                      id:"B", title:"B — Split Hero",
+                      pros:["Güçlü marka izlenimi — hero alan","Form sheet yukarı kaydırılabilir","Ekranı ikiye bölerek hiyerarşi kurar"],
+                      best:"Premium / ilk izlenimde marka öncelikli"
+                    },
+                    {
+                      id:"C", title:"C — Voice First",
+                      pros:["Görme engelli kullanıcılar için ideal","Sesle giriş ön plana çıkıyor","Waveform ile AI hissi güçlü"],
+                      best:"Erişilebilirlik öncelikli hedef kitle"
+                    }
+                  ].map(v=>(
+                    <div key={v.id} style={{
+                      background: tweaks.variant===v.id ? "rgba(74,124,66,0.08)" : "rgba(255,255,255,0.02)",
+                      border: tweaks.variant===v.id ? "1px solid rgba(74,124,66,0.3)" : "1px solid rgba(255,255,255,0.07)",
+                      borderRadius:14, padding:"16px 18px",
+                      cursor:"pointer", transition:"all 0.2s"
+                    }} onClick={()=>setTweak("variant",v.id)}>
+                      <div style={{fontSize:13, fontWeight:700, color:"rgba(255,255,255,0.9)", marginBottom:8}}>{v.title}</div>
+                      {v.pros.map((p,i)=>(
+                        <div key={i} style={{display:"flex", gap:8, marginBottom:5, alignItems:"flex-start"}}>
+                          <div style={{width:5, height:5, borderRadius:"50%", background:"var(--sage)", flexShrink:0, marginTop:5}}/>
+                          <span style={{fontSize:12, color:"rgba(255,255,255,0.4)", lineHeight:1.5}}>{p}</span>
+                        </div>
+                      ))}
+                      <div style={{
+                        marginTop:10, fontSize:11, fontWeight:600,
+                        color:"var(--gold)", display:"flex", alignItems:"center", gap:6
+                      }}>
+                        <Ic d={PATH.check} size={13} color="var(--gold)"/>
+                        {v.best}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── LAYOUT SPEC ── */}
+        {tweaks.section === "layout" && (
+          <div style={{padding:"40px 40px 60px"}}>
+            <div style={{marginBottom:32}}>
+              <div style={{fontSize:11, fontWeight:700, letterSpacing:"0.12em", color:"rgba(255,255,255,0.25)", marginBottom:6, textTransform:"uppercase"}}>Layout Anatomy</div>
+              <div style={{fontFamily:"'DM Serif Display',serif", fontSize:32, color:"#fff", marginBottom:8}}>
+                Varyant {tweaks.variant} — Bileşen Hiyerarşisi
+              </div>
+              <div style={{fontSize:13, color:"rgba(255,255,255,0.35)"}}>Her satır bir Flutter widget'a karşılık gelir. Ölçüler dp cinsindendir.</div>
+            </div>
+            <div style={{display:"flex", gap:48, flexWrap:"wrap", alignItems:"flex-start"}}>
+              <PhoneFrame label={`Varyant ${tweaks.variant}`} variant="Layout view" active={true}>
+                {activeVariant.comp}
+              </PhoneFrame>
+              <div style={{flex:1, minWidth:320}}>
+                <LayoutSpec variant={tweaks.variant}/>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── FLUTTER SPEC ── */}
+        {tweaks.section === "spec" && (
+          <div style={{padding:"40px 40px 60px"}}>
+            <div style={{marginBottom:32}}>
+              <div style={{fontSize:11, fontWeight:700, letterSpacing:"0.12em", color:"rgba(255,255,255,0.25)", marginBottom:6, textTransform:"uppercase"}}>Flutter Implementation</div>
+              <div style={{fontFamily:"'DM Serif Display',serif", fontSize:32, color:"#fff", marginBottom:8}}>
+                Varyant {tweaks.variant} — Widget Spec
+              </div>
+              <div style={{fontSize:13, color:"rgba(255,255,255,0.35)", maxWidth:600, lineHeight:1.6}}>
+                Flutter developer'a direkt iletebileceğiniz widget listesi. Her satır: widget adı + kritik prop'lar.
+              </div>
+            </div>
+            <div style={{display:"flex", gap:40, flexWrap:"wrap", alignItems:"flex-start"}}>
+              <PhoneFrame label={`Varyant ${tweaks.variant}`} variant="Flutter spec" active={true}>
+                {activeVariant.comp}
+              </PhoneFrame>
+              <div style={{flex:1, minWidth:400}}>
+                <FlutterSpec variant={tweaks.variant}/>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ACCESSIBILITY ── */}
+        {tweaks.section === "a11y" && (
+          <div style={{padding:"40px 40px 60px"}}>
+            <div style={{marginBottom:32}}>
+              <div style={{fontSize:11, fontWeight:700, letterSpacing:"0.12em", color:"rgba(255,255,255,0.25)", marginBottom:6, textTransform:"uppercase"}}>Accessibility</div>
+              <div style={{fontFamily:"'DM Serif Display',serif", fontSize:32, color:"#fff", marginBottom:8}}>
+                WCAG AA · TalkBack · VoiceOver
+              </div>
+              <div style={{fontSize:13, color:"rgba(255,255,255,0.35)", maxWidth:600, lineHeight:1.6}}>
+                Görme engelli kullanıcılar için zorunlu kurallar. Tüm varyantlara uygulanır.
+              </div>
+            </div>
+            <A11yPanel/>
+          </div>
+        )}
+
+      </div>
+
+      <style>{`
+        @keyframes pulseRing {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.8); opacity: 0; }
+        }
+        @keyframes waveBar {
+          0%, 100% { transform: scaleY(0.3); }
+          50% { transform: scaleY(1); }
+        }
+      `}</style>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
